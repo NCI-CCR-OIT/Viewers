@@ -63,7 +63,7 @@ export default class CustomizationService extends PubSubService {
 
   modeCustomizations: Record<string, Customization> = {};
   globalCustomizations: Record<string, Customization> = {};
-  configuration: CustomizationConfiguration;
+  configuration: any;
 
   constructor({ configuration, commandsManager }) {
     super(EVENTS);
@@ -71,7 +71,7 @@ export default class CustomizationService extends PubSubService {
     this.configuration = configuration || {};
   }
 
-  public init(extensionManager: ExtensionManager): void {
+  public init(extensionManager: any): void {
     this.extensionManager = extensionManager;
     this.initDefaults();
     this.addReferences(this.configuration);
