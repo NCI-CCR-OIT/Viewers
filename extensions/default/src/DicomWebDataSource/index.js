@@ -62,14 +62,15 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
   } = dicomWebConfig;
 
   const dicomWebConfigCopy = JSON.parse(JSON.stringify(dicomWebConfig));
-  // const headers = {};
-  // headers.Authorization = `Bearer ${localStorage.getItem('gcp-jwt-token')}`;
+  const headers = {};
+  headers.Authorization = `Bearer ${localStorage.getItem('gcp-jwt-token')}`;
+  console.log('headers:'+headers)
 
   const qidoConfig = {
     url: qidoRoot,
     staticWado,
     singlepart,
-    headers: userAuthenticationService.getAuthorizationHeader(),
+    headers: headers,
     errorInterceptor: errorHandler.getHTTPErrorHandler(),
   };
 
@@ -77,7 +78,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
     url: wadoRoot,
     staticWado,
     singlepart,
-    headers: userAuthenticationService.getAuthorizationHeader(),
+    headers: headers,
     errorInterceptor: errorHandler.getHTTPErrorHandler(),
   };
 
@@ -111,7 +112,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
       studies: {
         mapParams: mapParams.bind(),
         search: async function(origParams) {
-          const headers= userAuthenticationService.getAuthorizationHeader();
+          //const headers= headers;
           if (headers) {
             qidoDicomWebClient.headers = headers;
           }
@@ -151,7 +152,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
       },
       instances: {
         search: (studyInstanceUid, queryParameters) => {
-          const headers = userAuthenticationService.getAuthorizationHeader();
+          const headers = headers;
           console.log('headers:'+headers)
           if (headers) {
             qidoDicomWebClient.headers = headers;
@@ -201,7 +202,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
           sortFunction,
           madeInClient = false,
         } = {}) => {
-          const headers = userAuthenticationService.getAuthorizationHeader();
+          const headers = headers;
           console.log('headers:'+headers)
           if (headers) {
             wadoDicomWebClient.headers = headers;
@@ -236,7 +237,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
 
     store: {
       dicom: async (dataset, request) => {
-        const headers = userAuthenticationService.getAuthorizationHeader();
+        const headers = headers;
         console.log('headers:'+headers)
         if (headers) {
           wadoDicomWebClient.headers = headers;

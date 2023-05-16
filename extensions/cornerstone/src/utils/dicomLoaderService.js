@@ -47,6 +47,10 @@ const getImageInstanceId = imageInstance => {
 };
 
 const fetchIt = (url, headers = DICOMWeb.getAuthorizationHeader()) => {
+  headers.append(
+    'Authorization',
+    `Bearer ${localStorage.getItem('gcp-jwt-token')}`
+  );
   return fetch(url, headers).then(response => response.arrayBuffer());
 };
 
