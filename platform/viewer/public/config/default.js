@@ -17,9 +17,9 @@ window.config = {
       sourceName: 'dicomweb',
       configuration: {
         name: 'Orthanc',
-        wadoUriRoot: 'https://airstudies-dev.ccr.cancer.gov/wado',
-        qidoRoot: 'https://airstudies-dev.ccr.cancer.gov/dicom-web',
-        wadoRoot: 'https://airstudies-dev.ccr.cancer.gov/dicom-web',
+        wadoUriRoot: '/wado',
+        qidoRoot: '/dicom-web',
+        wadoRoot: '/dicom-web',
         qidoSupportsIncludeField: false,
         imageRendering: 'wadors',
         thumbnailRendering: 'wadors',
