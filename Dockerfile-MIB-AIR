@@ -23,7 +23,7 @@ FROM node:18-alpine
 # Copy dist folder, server.js and node_modules from build stage
 COPY --from=builder /app/platform/viewer/dist /app/dist
 COPY --from=builder /app/platform/viewer/server.js /app/server.js
-COPY --from=builder /app/platform/viewer/node_modules /app/node_modules
+COPY --from=builder /app/node_modules /app/node_modules
 
 # Start Node services
 CMD node /app/server.js

@@ -6,7 +6,7 @@ dist/
 build/
 
 # Dependencies
-node_modules/
+#node_modules/
 
 # Root
 README.md
