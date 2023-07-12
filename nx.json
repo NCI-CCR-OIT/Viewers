@@ -4,7 +4,8 @@
       "runner": "nx-cloud",
       "options": {
         "cacheableOperations": [
-          "build:viewer"
+          "build:viewer",
+          "build:orthanc"
         ],
         "accessToken": "N2E3MGQ5ZjEtN2E3ZC00OWYyLWIzNDMtOGIwNmE0ZDk1N2EwfHJlYWQtd3JpdGU="
       }
