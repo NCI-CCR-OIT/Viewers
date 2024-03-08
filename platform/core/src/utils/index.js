@@ -1,6 +1,7 @@
 import ObjectPath from './objectPath';
 import absoluteUrl from './absoluteUrl';
 import guid from './guid';
+import uuidv4 from './uuidv4';
 import sortBy from './sortBy.js';
 import writeScript from './writeScript.js';
 import b64toBlob from './b64toBlob.js';
@@ -13,6 +14,7 @@ import Queue from './Queue';
 import isDicomUid from './isDicomUid';
 import formatDate from './formatDate';
 import formatPN from './formatPN';
+import generateAcceptHeader from './generateAcceptHeader';
 import resolveObjectPath from './resolveObjectPath';
 import hierarchicalListUtils from './hierarchicalListUtils';
 import progressTrackingUtils from './progressTrackingUtils';
@@ -25,6 +27,7 @@ import debounce from './debounce';
 import roundNumber from './roundNumber';
 import downloadCSVReport from './downloadCSVReport';
 import isEqualWithin from './isEqualWithin';
+import addAccessors from './addAccessors';
 import {
   sortStudy,
   sortStudySeries,
@@ -40,6 +43,7 @@ import { splitComma, getSplitParam } from './splitComma';
 
 const utils = {
   guid,
+  uuidv4,
   ObjectPath,
   absoluteUrl,
   sortBy,
@@ -62,6 +66,7 @@ const utils = {
   Queue,
   isDicomUid,
   isEqualWithin,
+  addAccessors,
   resolveObjectPath,
   hierarchicalListUtils,
   progressTrackingUtils,
@@ -74,6 +79,7 @@ const utils = {
   subscribeToNextViewportGridChange,
   splitComma,
   getSplitParam,
+  generateAcceptHeader,
 };
 
 export {
@@ -105,6 +111,7 @@ export {
   downloadCSVReport,
   splitComma,
   getSplitParam,
+  generateAcceptHeader,
 };
 
 export default utils;

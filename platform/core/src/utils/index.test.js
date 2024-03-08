@@ -24,6 +24,7 @@ describe('Top level exports', () => {
       'b64toBlob',
       'formatDate',
       'formatPN',
+      'generateAcceptHeader',
       'isEqualWithin',
       //'loadAndCacheDerivedDisplaySets',
       'isDisplaySetReconstructable',
@@ -38,6 +39,8 @@ describe('Top level exports', () => {
       'hierarchicalListUtils',
       'progressTrackingUtils',
       'subscribeToNextViewportGridChange',
+      'uuidv4',
+      'addAccessors',
     ].sort();
 
     const exports = Object.keys(utils.default).sort();
