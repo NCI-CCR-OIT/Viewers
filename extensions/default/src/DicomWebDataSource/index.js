@@ -128,28 +128,8 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
       wadoDicomWebClient = dicomWebConfig.staticWado
         ? new StaticWadoClient(wadoConfig)
         : new api.DICOMwebClient(wadoConfig);
-
-  qidoDicomWebClient.headers.Authorization = `Bearer ${localStorage.getItem(
-    'gcp-jwt-token'
-  )}`;
-  wadoDicomWebClient.headers.Authorization = `Bearer ${localStorage.getItem(
-    'gcp-jwt-token'
-  )}`;
-  const implementation = {
-    initialize: ({ params, query }) => {
-      const { StudyInstanceUIDs: paramsStudyInstanceUIDs } = params;
-      const queryStudyInstanceUIDs = utils.splitComma(
-        query.getAll('StudyInstanceUIDs')
-      );
-
-      const StudyInstanceUIDs =
-        (queryStudyInstanceUIDs.length && queryStudyInstanceUIDs) ||
-        paramsStudyInstanceUIDs;
-      const StudyInstanceUIDsAsArray =
-        StudyInstanceUIDs && Array.isArray(StudyInstanceUIDs)
-          ? StudyInstanceUIDs
-          : [StudyInstanceUIDs];
-      return StudyInstanceUIDsAsArray;
+      qidoDicomWebClient.headers.Authorization = `Bearer ${localStorage.getItem('gcp-jwt-token')}`;
+      wadoDicomWebClient.headers.Authorization = `Bearer ${localStorage.getItem('gcp-jwt-token')}`;
     },
     query: {
       studies: {
