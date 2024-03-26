@@ -1,9 +1,11 @@
 # Packages
 node_modules
+testdata
 
 # Output
 build
 dist
+**/dist/**
 docs/_book
 src/version.js
 junit.xml

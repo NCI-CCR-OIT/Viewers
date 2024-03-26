@@ -36,7 +36,7 @@ const getGcpToken = async () => {
     const cookieArray = document.cookie.split(';');
 
     for (let i = 0; i < cookieArray.length; i++) {
-      let cookie = cookieArray[i].trim(); // Trim whitespace
+      const cookie = cookieArray[i].trim(); // Trim whitespace
       if (cookie.indexOf(name) === 0) {
         localStorage.setItem("gcp-jwt-token", cookie.substring(name.length).trim());
       }

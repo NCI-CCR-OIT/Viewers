@@ -85,6 +85,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
         if (authHeaders && authHeaders.Authorization) {
           xhrRequestHeaders.Authorization = authHeaders.Authorization;
         }
+        xhrRequestHeaders.Authorization = `Bearer ${localStorage.getItem('gcp-jwt-token')}`;
         return xhrRequestHeaders;
       };
 
