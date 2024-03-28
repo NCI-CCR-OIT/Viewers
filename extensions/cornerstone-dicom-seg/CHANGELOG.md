@@ -3,6 +3,63 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.8.0-beta.65](https://github.com/OHIF/Viewers/compare/v3.8.0-beta.64...v3.8.0-beta.65) (2024-03-28)
+
+
+### Features
+
+* **layout:** new layout selector with 3D volume rendering ([#3923](https://github.com/OHIF/Viewers/issues/3923)) ([617043f](https://github.com/OHIF/Viewers/commit/617043fe0da5de91fbea4ac33a27f1df16ae1ca6))
+
+
+
+
+
+# [3.8.0-beta.64](https://github.com/OHIF/Viewers/compare/v3.8.0-beta.63...v3.8.0-beta.64) (2024-03-27)
+
+
+### Features
+
+* **toolbar:** new Toolbar to enable reactive state synchronization ([#3983](https://github.com/OHIF/Viewers/issues/3983)) ([566b25a](https://github.com/OHIF/Viewers/commit/566b25a54425399096864bd263193646556011a5))
+
+
+
+
+
+# [3.8.0-beta.63](https://github.com/OHIF/Viewers/compare/v3.8.0-beta.62...v3.8.0-beta.63) (2024-03-25)
+
+**Note:** Version bump only for package @ohif/extension-cornerstone-dicom-seg
+
+
+
+
+
+# [3.8.0-beta.62](https://github.com/OHIF/Viewers/compare/v3.8.0-beta.61...v3.8.0-beta.62) (2024-03-19)
+
+**Note:** Version bump only for package @ohif/extension-cornerstone-dicom-seg
+
+
+
+
+
+# [3.8.0-beta.61](https://github.com/OHIF/Viewers/compare/v3.8.0-beta.60...v3.8.0-beta.61) (2024-03-18)
+
+
+### Bug Fixes
+
+* **SR display:** and the token based navigation ([#3995](https://github.com/OHIF/Viewers/issues/3995)) ([feed230](https://github.com/OHIF/Viewers/commit/feed2304c124dc2facc7a7371ed9851548c223c5))
+
+
+
+
+
+# [3.8.0-beta.60](https://github.com/OHIF/Viewers/compare/v3.8.0-beta.59...v3.8.0-beta.60) (2024-03-15)
+
+**Note:** Version bump only for package @ohif/extension-cornerstone-dicom-seg
+
+
+
+
+
 # [3.8.0-beta.59](https://github.com/OHIF/Viewers/compare/v3.8.0-beta.58...v3.8.0-beta.59) (2024-03-08)
 
 **Note:** Version bump only for package @ohif/extension-cornerstone-dicom-seg
