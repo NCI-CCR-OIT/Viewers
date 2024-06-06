@@ -1,13 +1,17 @@
 import React from 'react';
-import { ServicesManager } from '@ohif/core';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
-import { annotation as CsAnnotation } from '@cornerstonejs/tools';
 
 import MeasurementItem from './MeasurementItem';
 
-const MeasurementTable = ({ data, title, onClick, onEdit, servicesManager }) => {
-  servicesManager = servicesManager as ServicesManager;
+const MeasurementTable = ({
+  data,
+  title,
+  onClick,
+  onEdit,
+  onDelete,
+  servicesManager,
+}: withAppTypes) => {
   const { customizationService, measurementService } = servicesManager.services;
   const { t } = useTranslation('MeasurementTable');
   const amount = data.length;
@@ -20,6 +24,7 @@ const MeasurementTable = ({ data, title, onClick, onEdit, servicesManager }) => 
 
   const onMeasurementDeleteHandler = ({ uid }) => {
     const measurement = measurementService.getMeasurement(uid);
+    onDelete?.({ uid });
     measurementService.remove(
       uid,
       {

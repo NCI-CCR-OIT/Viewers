@@ -1,4 +1,6 @@
-window.config = {
+/** @type {AppTypes.Config} */
+
+const config = {
   routerBasename: '/',
   customizationService: {
     dicomUploadComponent:
@@ -175,3 +177,5 @@ window.config = {
     },
   ],
 };
+
+window.config = config;

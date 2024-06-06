@@ -5,7 +5,12 @@ import i18n from '@ohif/i18n';
 import { I18nextProvider } from 'react-i18next';
 import { BrowserRouter } from 'react-router-dom';
 import Compose from './routes/Mode/Compose';
-import { ServicesManager, ExtensionManager, CommandsManager, HotkeysManager } from '@ohif/core';
+import {
+  ExtensionManager,
+  CommandsManager,
+  HotkeysManager,
+  ServiceProvidersManager,
+} from '@ohif/core';
 import {
   DialogProvider,
   Modal,
@@ -27,7 +32,8 @@ import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
 
 let commandsManager: CommandsManager,
   extensionManager: ExtensionManager,
-  servicesManager: ServicesManager,
+  servicesManager: AppTypes.ServicesManager,
+  serviceProvidersManager: ServiceProvidersManager,
   hotkeysManager: HotkeysManager;
 
 // Gets the GCP token on app load
@@ -68,11 +74,19 @@ function App({ config, defaultExtensions, defaultModes }) {
   commandsManager = init.commandsManager;
   extensionManager = init.extensionManager;
   servicesManager = init.servicesManager;
+  serviceProvidersManager = init.serviceProvidersManager;
   hotkeysManager = init.hotkeysManager;
 
   // Set appConfig
   const appConfigState = init.appConfig;
   const { routerBasename, modes, dataSources, oidc, showStudyList } = appConfigState;
+
+  // get the maximum 3D texture size
+  const canvas = document.createElement('canvas');
+  const gl = canvas.getContext('webgl2');
+
+  const max3DTextureSize = gl.getParameter(gl.MAX_3D_TEXTURE_SIZE);
+  appConfigState.max3DTextureSize = max3DTextureSize;
 
   const {
     uiDialogService,
@@ -98,6 +112,15 @@ function App({ config, defaultExtensions, defaultModes }) {
     [DialogProvider, { service: uiDialogService }],
     [ModalProvider, { service: uiModalService, modal: Modal }],
   ];
+
+  // Loop through and register each of the service providers registered with the ServiceProvidersManager.
+  const providersFromManager = Object.entries(serviceProvidersManager.providers);
+  if (providersFromManager.length > 0) {
+    providersFromManager.forEach(([serviceName, provider]) => {
+      providers.push([provider, { service: servicesManager.services[serviceName] }]);
+    });
+  }
+
   const CombinedProviders = ({ children }) => Compose({ components: providers, children });
 
   let authRoutes = null;

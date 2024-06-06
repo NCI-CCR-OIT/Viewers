@@ -1,16 +1,16 @@
 import log from './../log.js';
-import Services from '../types/Services';
 import CommandsManager from '../classes/CommandsManager';
 import ExtensionManager from '../extensions/ExtensionManager';
 
 export default class ServicesManager {
-  public services: Services = {};
+  public services: AppTypes.Services = {};
   public registeredServiceNames: string[] = [];
   private _commandsManager: CommandsManager;
   private _extensionManager: ExtensionManager;
 
   constructor(commandsManager: CommandsManager) {
     this._commandsManager = commandsManager;
+    this._extensionManager = null;
     this.services = {};
     this.registeredServiceNames = [];
   }
@@ -46,6 +46,7 @@ export default class ServicesManager {
     if (service.create) {
       this.services[service.name] = service.create({
         configuration,
+        extensionManager: this._extensionManager,
         commandsManager: this._commandsManager,
         servicesManager: this,
         extensionManager: this._extensionManager,

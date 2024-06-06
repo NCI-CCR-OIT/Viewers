@@ -12,7 +12,7 @@ function promptHydrateSEG({
   viewportId,
   preHydrateCallbacks,
   hydrateSEGDisplaySet,
-}) {
+}: withAppTypes) {
   const { uiViewportDialogService } = servicesManager.services;
 
   return new Promise(async function (resolve, reject) {
@@ -62,6 +62,11 @@ function _askHydrate(uiViewportDialogService, viewportId) {
       onOutsideClick: () => {
         uiViewportDialogService.hide();
         resolve(RESPONSE.CANCEL);
+      },
+      onKeyPress: event => {
+        if (event.key === 'Enter') {
+          onSubmit(RESPONSE.HYDRATE_SEG);
+        }
       },
     });
   });

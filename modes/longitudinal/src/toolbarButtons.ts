@@ -1,34 +1,9 @@
 // TODO: torn, can either bake this here; or have to create a whole new button type
 // Only ways that you can pass in a custom React component for render :l
-import { WindowLevelMenuItem } from '@ohif/ui';
-import { defaults, ToolbarService } from '@ohif/core';
+import { ToolbarService } from '@ohif/core';
 import type { Button } from '@ohif/core/types';
 
-const { windowLevelPresets } = defaults;
 const { createButton } = ToolbarService;
-
-/**
- *
- * @param {*} preset - preset number (from above import)
- * @param {*} title
- * @param {*} subtitle
- */
-function _createWwwcPreset(preset, title, subtitle) {
-  return {
-    id: preset.toString(),
-    title,
-    subtitle,
-    commands: [
-      {
-        commandName: 'setWindowLevel',
-        commandOptions: {
-          ...windowLevelPresets[preset],
-        },
-        context: 'CORNERSTONE',
-      },
-    ],
-  };
-}
 
 export const setToolActiveToolbar = {
   commandName: 'setToolActiveToolbar',
@@ -91,10 +66,42 @@ const toolbarButtons: Button[] = [
           evaluate: 'evaluate.cornerstoneTool',
         }),
         createButton({
+          id: 'RectangleROI',
+          icon: 'tool-rectangle',
+          label: 'Rectangle',
+          tooltip: 'Rectangle ROI',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+        createButton({
           id: 'CircleROI',
           icon: 'tool-circle',
           label: 'Circle',
           tooltip: 'Circle Tool',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+        createButton({
+          id: 'PlanarFreehandROI',
+          icon: 'icon-tool-freehand-roi',
+          label: 'Freehand ROI',
+          tooltip: 'Freehand ROI',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+        createButton({
+          id: 'SplineROI',
+          icon: 'icon-tool-spline-roi',
+          label: 'Spline ROI',
+          tooltip: 'Spline ROI',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+        createButton({
+          id: 'LivewireContour',
+          icon: 'icon-tool-livewire',
+          label: 'Livewire tool',
+          tooltip: 'Livewire tool',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
         }),
@@ -111,33 +118,15 @@ const toolbarButtons: Button[] = [
       evaluate: 'evaluate.cornerstoneTool',
     },
   },
-  // Window Level + Presets...
+  // Window Level
   {
     id: 'WindowLevel',
-    uiType: 'ohif.splitButton',
+    uiType: 'ohif.radioGroup',
     props: {
-      groupId: 'WindowLevel',
-      primary: createButton({
-        id: 'WindowLevel',
-        icon: 'tool-window-level',
-        label: 'Window Level',
-        tooltip: 'Window Level',
-        commands: setToolActiveToolbar,
-        evaluate: 'evaluate.cornerstoneTool',
-      }),
-      secondary: {
-        icon: 'chevron-down',
-        label: 'W/L Manual',
-        tooltip: 'W/L Presets',
-      },
-      renderer: WindowLevelMenuItem,
-      items: [
-        _createWwwcPreset(1, 'Soft tissue', '400 / 40'),
-        _createWwwcPreset(2, 'Lung', '1500 / -600'),
-        _createWwwcPreset(3, 'Liver', '150 / 90'),
-        _createWwwcPreset(4, 'Bone', '2500 / 480'),
-        _createWwwcPreset(5, 'Brain', '80 / 40'),
-      ],
+      icon: 'tool-window-level',
+      label: 'Window Level',
+      commands: setToolActiveToolbar,
+      evaluate: 'evaluate.cornerstoneTool',
     },
   },
   // Pan...
@@ -160,7 +149,10 @@ const toolbarButtons: Button[] = [
       icon: 'tool-3d-rotate',
       label: '3D Rotate',
       commands: setToolActiveToolbar,
-      evaluate: 'evaluate.cornerstoneTool',
+      evaluate: {
+        name: 'evaluate.cornerstoneTool',
+        disabledText: 'Select a 3D viewport to enable this tool',
+      },
     },
   },
   {
@@ -169,11 +161,7 @@ const toolbarButtons: Button[] = [
     props: {
       icon: 'tool-capture',
       label: 'Capture',
-      commands: [
-        {
-          commandName: 'showDownloadViewportModal',
-        },
-      ],
+      commands: 'showDownloadViewportModal',
       evaluate: 'evaluate.action',
     },
   },
@@ -184,11 +172,6 @@ const toolbarButtons: Button[] = [
       rows: 3,
       columns: 4,
       evaluate: 'evaluate.action',
-      commands: [
-        {
-          commandName: 'setViewportGridLayout',
-        },
-      ],
     },
   },
   {
@@ -204,7 +187,10 @@ const toolbarButtons: Button[] = [
           toolGroupIds: ['mpr'],
         },
       },
-      evaluate: 'evaluate.cornerstoneTool',
+      evaluate: {
+        name: 'evaluate.cornerstoneTool',
+        disabledText: 'Select an MPR viewport to enable this tool',
+      },
     },
   },
 ];

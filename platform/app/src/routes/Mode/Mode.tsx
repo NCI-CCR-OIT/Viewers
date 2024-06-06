@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef, useContext, createContext } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router';
 import PropTypes from 'prop-types';
-import { ServicesManager, utils } from '@ohif/core';
+import { utils } from '@ohif/core';
 import { DragAndDropProvider, ImageViewerProvider } from '@ohif/ui';
 import { useSearchParams } from '@hooks';
 import { useAppConfig } from '@state';
@@ -21,7 +21,7 @@ export default function ModeRoute({
   servicesManager,
   commandsManager,
   hotkeysManager,
-}) {
+}: withAppTypes) {
   const [appConfig] = useAppConfig();
 
   // Parse route params/querystring
@@ -60,9 +60,8 @@ export default function ModeRoute({
     locationRef.current = location;
   }
 
-  const { displaySetService, hangingProtocolService, userAuthenticationService } = (
-    servicesManager as ServicesManager
-  ).services;
+  const { displaySetService, panelService, hangingProtocolService, userAuthenticationService } =
+    servicesManager.services;
 
   const { extensions, sopClassHandlers, hotkeys: hotkeyObj, hangingProtocol } = mode;
 
@@ -141,7 +140,17 @@ export default function ModeRoute({
         servicesManager,
         studyInstanceUIDs,
       });
+
       if (isMounted.current) {
+        const { leftPanels = [], rightPanels = [], ...layoutProps } = layoutData.props;
+
+        panelService.reset();
+        panelService.addPanels(panelService.PanelPosition.Left, leftPanels);
+        panelService.addPanels(panelService.PanelPosition.Right, rightPanels);
+
+        // layoutProps contains all props but leftPanels and rightPanels
+        layoutData.props = layoutProps;
+
         layoutTemplateData.current = layoutData;
         setRefresh(!refresh);
       }
@@ -232,7 +241,7 @@ export default function ModeRoute({
           const lowerVal = val.toLowerCase();
           if (lowerVal !== 'studyinstanceuids') {
             // Not sure why the case matters here - it doesn't in the URL
-            if (lowerVal === 'seriesinstanceuid') {
+            if (lowerVal === 'seriesinstanceuids') {
               const seriesUIDs = getSplitParam(lowerVal, query);
               return {
                 ...acc,
@@ -244,8 +253,10 @@ export default function ModeRoute({
           }
         }, {}) ?? {};
 
+      let unsubs;
+
       if (route.init) {
-        return await route.init(
+        unsubs = await route.init(
           {
             servicesManager,
             extensionManager,
@@ -273,6 +284,14 @@ export default function ModeRoute({
     let unsubscriptions;
     setupRouteInit().then(unsubs => {
       unsubscriptions = unsubs;
+
+      // Some code may need to run after hanging protocol initialization
+      // (eg: workflowStepsService initialization on 4D mode)
+      mode?.onSetupRouteComplete?.({
+        servicesManager,
+        extensionManager,
+        commandsManager,
+      });
     });
 
     return () => {

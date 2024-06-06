@@ -52,6 +52,9 @@ export const fourUp = {
                 id: 'mpr',
                 source: true,
                 target: true,
+                options: {
+                  syncColormap: true,
+                },
               },
             ],
           },
@@ -74,8 +77,11 @@ export const fourUp = {
             {
               id: 'mprDisplaySet',
               options: {
-                // ToDo: choose appropriate preset
-                displayPreset: 'CT-Bone',
+                displayPreset: {
+                  CT: 'CT-Bone',
+                  MR: 'MR-Default',
+                  default: 'CT-Bone',
+                },
               },
             },
           ],
@@ -94,6 +100,9 @@ export const fourUp = {
                 id: 'mpr',
                 source: true,
                 target: true,
+                options: {
+                  syncColormap: true,
+                },
               },
             ],
           },
@@ -117,6 +126,9 @@ export const fourUp = {
                 id: 'mpr',
                 source: true,
                 target: true,
+                options: {
+                  syncColormap: true,
+                },
               },
             ],
           },

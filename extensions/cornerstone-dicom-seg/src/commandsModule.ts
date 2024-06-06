@@ -1,6 +1,6 @@
 import dcmjs from 'dcmjs';
 import { createReportDialogPrompt } from '@ohif/extension-default';
-import { ServicesManager, Types } from '@ohif/core';
+import { Types } from '@ohif/core';
 import { cache, metaData } from '@cornerstonejs/core';
 import {
   segmentation as cornerstoneToolsSegmentation,
@@ -48,7 +48,7 @@ const commandsModule = ({
     displaySetService,
     viewportGridService,
     toolGroupService,
-  } = (servicesManager as ServicesManager).services;
+  } = servicesManager.services;
 
   const actions = {
     /**
@@ -94,6 +94,7 @@ const commandsModule = ({
       updateViewportsForSegmentationRendering({
         viewportId,
         servicesManager,
+        displaySet,
         loadFn: async () => {
           const currentSegmentations = segmentationService.getSegmentations();
           const segmentationId = await segmentationService.createSegmentationForDisplaySet(
@@ -206,11 +207,14 @@ const commandsModule = ({
     loadSegmentationDisplaySetsForViewport: async ({ viewportId, displaySets }) => {
       // Todo: handle adding more than one segmentation
       const displaySet = displaySets[0];
+      const referencedDisplaySet = displaySetService.getDisplaySetByUID(
+        displaySet.referencedDisplaySetInstanceUID
+      );
 
       updateViewportsForSegmentationRendering({
         viewportId,
         servicesManager,
-        referencedDisplaySetInstanceUID: displaySet.referencedDisplaySetInstanceUID,
+        displaySet,
         loadFn: async () => {
           const segDisplaySet = displaySet;
           const suppressEvents = false;
@@ -221,7 +225,8 @@ const commandsModule = ({
 
           const boundFn = segmentationService[serviceFunction].bind(segmentationService);
           const segmentationId = await boundFn(segDisplaySet, null, suppressEvents);
-
+          const segmentation = segmentationService.getSegmentation(segmentationId);
+          segmentation.description = `S${referencedDisplaySet.SeriesNumber}: ${referencedDisplaySet.SeriesDescription}`;
           return segmentationId;
         },
       });
@@ -430,30 +435,6 @@ const commandsModule = ({
         });
       });
     },
-    toggleThresholdRangeAndDynamic() {
-      const toolGroupIds = toolGroupService.getToolGroupIds();
-
-      if (!toolGroupIds) {
-        return;
-      }
-
-      toolGroupIds.forEach(toolGroupId => {
-        const toolGroup = toolGroupService.getToolGroup(toolGroupId);
-        const brushInstances = segmentationUtils.getBrushToolInstances(toolGroup.id);
-
-        brushInstances.forEach(({ configuration }) => {
-          const { activeStrategy, strategySpecificConfiguration } = configuration;
-
-          if (activeStrategy.startsWith('THRESHOLD')) {
-            const thresholdConfig = strategySpecificConfiguration.THRESHOLD;
-
-            if (thresholdConfig) {
-              thresholdConfig.isDynamic = !thresholdConfig.isDynamic;
-            }
-          }
-        });
-      });
-    },
   };
 
   const definitions = {
@@ -486,9 +467,6 @@ const commandsModule = ({
     },
     setThresholdRange: {
       commandFn: actions.setThresholdRange,
-    },
-    toggleThresholdRangeAndDynamic: {
-      commandFn: actions.toggleThresholdRangeAndDynamic,
     },
   };
 

@@ -2,7 +2,6 @@ import { CommandsManager } from '../../classes';
 import { ExtensionManager } from '../../extensions';
 import { PubSubService } from '../_shared/pubSubServiceInterface';
 import type { RunCommand } from '../../types/Command';
-import ServicesManager from '../ServicesManager';
 import { Button, ButtonProps, EvaluateFunction, EvaluatePublic, NestedButtonProps } from './types';
 
 const EVENTS = {
@@ -52,14 +51,14 @@ export default class ToolbarService extends PubSubService {
 
   _commandsManager: CommandsManager;
   _extensionManager: ExtensionManager;
-  _servicesManager: ServicesManager;
+  _servicesManager: AppTypes.ServicesManager;
   _evaluateFunction: Record<string, EvaluateFunction> = {};
   _serviceSubscriptions = [];
 
   constructor(
     commandsManager: CommandsManager,
     extensionManager: ExtensionManager,
-    servicesManager: ServicesManager
+    servicesManager: AppTypes.ServicesManager
   ) {
     super(EVENTS);
     this._commandsManager = commandsManager;
@@ -68,7 +67,7 @@ export default class ToolbarService extends PubSubService {
   }
 
   public reset(): void {
-    this.unsubscriptions.forEach(unsub => unsub());
+    // this.unsubscriptions.forEach(unsub => unsub());
     this.state = {
       buttons: {},
       buttonSections: {},
@@ -120,6 +119,10 @@ export default class ToolbarService extends PubSubService {
   public addButtons(buttons: Button[]): void {
     buttons.forEach(button => {
       if (!this.state.buttons[button.id]) {
+        if (!button.props) {
+          button.props = {};
+        }
+
         this.state.buttons[button.id] = button;
       }
     });
@@ -152,7 +155,7 @@ export default class ToolbarService extends PubSubService {
     const itemId = interaction.itemId ?? interaction.id;
     interaction.itemId = itemId;
 
-    const commands = Array.isArray(interaction.commands)
+    let commands = Array.isArray(interaction.commands)
       ? interaction.commands
       : [interaction.commands];
 
@@ -165,6 +168,27 @@ export default class ToolbarService extends PubSubService {
     }
 
     const commandOptions = { ...options, ...interaction };
+
+    commands = commands.map(command => {
+      if (typeof command === 'function') {
+        return () => {
+          command({
+            ...commandOptions,
+            commandsManager: this._commandsManager,
+            servicesManager: this._servicesManager,
+          });
+        };
+      }
+
+      return command;
+    });
+
+    // if still no commands, return
+    commands = commands.filter(Boolean);
+
+    if (!commands.length) {
+      return;
+    }
 
     // Loop through commands and run them with the combined options
     this._commandsManager.run(commands, commandOptions);
@@ -204,6 +228,7 @@ export default class ToolbarService extends PubSubService {
         const evaluated = props.evaluate?.({ ...refreshProps, button });
         const updatedProps = {
           ...props,
+          ...evaluated,
           disabled: evaluated?.disabled || false,
           className: evaluated?.className || '',
           isActive: evaluated?.isActive, // isActive will be undefined for buttons without this prop
@@ -349,6 +374,7 @@ export default class ToolbarService extends PubSubService {
    * @param {Array} buttons - The buttons to be added to the section.
    */
   createButtonSection(key, buttons) {
+    // make sure all buttons have at least an empty props
     this.state.buttonSections[key] = buttons;
     this._broadcastEvent(this.EVENTS.TOOL_BAR_MODIFIED, { ...this.state });
   }
@@ -372,6 +398,26 @@ export default class ToolbarService extends PubSubService {
   }
 
   /**
+   * Retrieves the tool name for a given button.
+   * @param button - The button object.
+   * @returns The tool name associated with the button.
+   */
+  getToolNameForButton(button) {
+    const { props } = button;
+
+    const commands = props?.commands || button.commands;
+    const commandsArray = Array.isArray(commands) ? commands : [commands];
+    const firstCommand = commandsArray[0];
+
+    if (firstCommand?.commandOptions) {
+      return firstCommand.commandOptions.toolName ?? props?.id ?? button.id;
+    }
+
+    // use id as a fallback for toolName
+    return props?.id ?? button.id;
+  }
+
+  /**
    *
    * @param {*} btn
    * @param {*} btnSection
@@ -386,7 +432,9 @@ export default class ToolbarService extends PubSubService {
     const { id, uiType, component } = btn;
     const { groupId } = btn.props;
 
-    const buttonType = this._getButtonUITypes()[uiType];
+    const buttonTypes = this._getButtonUITypes();
+
+    const buttonType = buttonTypes[uiType];
 
     if (!buttonType) {
       return;
@@ -414,20 +462,37 @@ export default class ToolbarService extends PubSubService {
   };
 
   handleEvaluate = props => {
-    const { evaluate } = props;
+    const { evaluate, options } = props;
+
+    if (typeof options === 'string') {
+      // get the custom option component from the extension manager and set it as the optionComponent
+      const buttonTypes = this._getButtonUITypes();
+      const optionComponent = buttonTypes[options]?.defaultComponent;
+      props.options = {
+        optionComponent,
+      };
+    }
 
     if (typeof evaluate === 'function') {
       return;
     }
 
     if (Array.isArray(evaluate)) {
-      const evaluators = evaluate.map(evaluatorName => {
+      const evaluators = evaluate.map(evaluator => {
+        const isObject = typeof evaluator === 'object';
+
+        const evaluatorName = isObject ? evaluator.name : evaluator;
+
         const evaluateFunction = this._evaluateFunction[evaluatorName];
 
         if (!evaluateFunction) {
           throw new Error(
             `Evaluate function not found for name: ${evaluatorName}, you can register an evaluate function with the getToolbarModule in your extensions`
           );
+        }
+
+        if (isObject) {
+          return args => evaluateFunction({ ...args, ...evaluator });
         }
 
         return evaluateFunction;
@@ -462,9 +527,8 @@ export default class ToolbarService extends PubSubService {
     }
 
     if (typeof evaluate === 'object') {
-      const { name, options } = evaluate;
+      const { name, ...options } = evaluate;
       const evaluateFunction = this._evaluateFunction[name];
-
       if (evaluateFunction) {
         props.evaluate = args => evaluateFunction({ ...args, ...options });
         return;

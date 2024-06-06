@@ -101,6 +101,30 @@ const toolbarButtons: Button[] = [
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
         }),
+        createButton({
+          id: 'PlanarFreehandROI',
+          icon: 'icon-tool-freehand-roi',
+          label: 'Freehand ROI',
+          tooltip: 'Freehand ROI',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+        createButton({
+          id: 'SplineROI',
+          icon: 'icon-tool-spline-roi',
+          label: 'Spline ROI',
+          tooltip: 'Spline ROI',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+        createButton({
+          id: 'LivewireContour',
+          icon: 'icon-tool-livewire',
+          label: 'Livewire tool',
+          tooltip: 'Livewire tool',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
       ],
     },
   },
@@ -114,7 +138,7 @@ const toolbarButtons: Button[] = [
       evaluate: 'evaluate.cornerstoneTool',
     },
   },
-  // Window Level + Presets...
+  // Window Level
   {
     id: 'WindowLevel',
     uiType: 'ohif.splitButton',
@@ -179,15 +203,7 @@ const toolbarButtons: Button[] = [
       type: 'tool',
       icon: 'tool-3d-rotate',
       label: '3D Rotate',
-      commands: [
-        {
-          commandName: 'setToolActive',
-          commandOptions: {
-            toolName: 'TrackBallRotate',
-          },
-          context: 'CORNERSTONE',
-        },
-      ],
+      commands: setToolActiveToolbar,
     },
   },
   {
@@ -196,11 +212,7 @@ const toolbarButtons: Button[] = [
     props: {
       icon: 'tool-capture',
       label: 'Capture',
-      commands: [
-        {
-          commandName: 'showDownloadViewportModal',
-        },
-      ],
+      commands: 'showDownloadViewportModal',
       evaluate: 'evaluate.action',
     },
   },
