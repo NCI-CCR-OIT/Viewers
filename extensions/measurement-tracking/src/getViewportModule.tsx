@@ -1,9 +1,8 @@
 import React from 'react';
+import { utils } from '@ohif/extension-cornerstone';
 
 const Component = React.lazy(() => {
-  return import(
-    /* webpackPrefetch: true */ './viewports/TrackedCornerstoneViewport'
-  );
+  return import(/* webpackPrefetch: true */ './viewports/TrackedCornerstoneViewport');
 });
 
 const OHIFCornerstoneViewport = props => {
@@ -14,11 +13,7 @@ const OHIFCornerstoneViewport = props => {
   );
 };
 
-function getViewportModule({
-  servicesManager,
-  commandsManager,
-  extensionManager,
-}) {
+function getViewportModule({ servicesManager, commandsManager, extensionManager }) {
   const ExtendedOHIFCornerstoneTrackingViewport = props => {
     return (
       <OHIFCornerstoneViewport
@@ -34,6 +29,7 @@ function getViewportModule({
     {
       name: 'cornerstone-tracked',
       component: ExtendedOHIFCornerstoneTrackingViewport,
+      isReferenceViewable: utils.isReferenceViewable.bind(null, servicesManager),
     },
   ];
 }

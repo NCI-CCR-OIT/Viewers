@@ -1,6 +1,8 @@
 ---
 sidebar_position: 4
 sidebar_label: SOP Class Handler
+title: SOP Class Handler Module
+summary: Documentation for OHIF SOP Class Handler Module, which processes specific DICOM SOP classes into displayable sets, supporting various medical imaging formats and defining how different types of DICOM data are prepared for viewing.
 ---
 # Module: SOP Class Handler
 
@@ -105,7 +107,7 @@ of the instances to the display set.
 You can find another example for this mapping between raw metadata and displaySet for
 `DICOM-SR` extension.
 
-## `@ohif/viewer` usage
+## `@ohif/app` usage
 
 We use the `sopClassHandlerModule`s in `DisplaySetService` where we
 transform instances from the raw metadata format to a OHIF displaySet format.

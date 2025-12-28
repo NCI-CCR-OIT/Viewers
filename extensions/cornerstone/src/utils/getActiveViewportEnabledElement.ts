@@ -1,13 +1,8 @@
-import { getEnabledElement } from '@cornerstonejs/core';
-import { IEnabledElement } from '@cornerstonejs/core/dist/esm/types';
+import { IEnabledElement } from '@cornerstonejs/core/types';
 
-import { getEnabledElement as OHIFgetEnabledElement } from '../state';
+import { getViewportEnabledElement } from './getViewportEnabledElement';
 
-export default function getActiveViewportEnabledElement(
-  viewportGridService
-): IEnabledElement {
-  const { activeViewportIndex } = viewportGridService.getState();
-  const { element } = OHIFgetEnabledElement(activeViewportIndex) || {};
-  const enabledElement = getEnabledElement(element);
-  return enabledElement;
+export default function getActiveViewportEnabledElement(viewportGridService): IEnabledElement {
+  const { activeViewportId } = viewportGridService.getState();
+  return getViewportEnabledElement(activeViewportId);
 }

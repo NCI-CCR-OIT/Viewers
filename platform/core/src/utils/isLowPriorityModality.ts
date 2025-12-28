@@ -4,6 +4,10 @@ const LOW_PRIORITY_MODALITIES = Object.freeze([
   'PR',
   'SR',
   'RTSTRUCT',
+  'RTDOSE',
+  'RTPLAN',
+  'RTRECORD',
+  'REG',
 ]);
 
 export default function isLowPriorityModality(Modality) {

@@ -1,4 +1,6 @@
 import SUPPORTED_TOOLS from './constants/supportedTools';
+import { getIsLocked } from './utils/getIsLocked';
+import { getIsVisible } from './utils/getIsVisible';
 import getSOPInstanceAttributes from './utils/getSOPInstanceAttributes';
 import { utils } from '@ohif/core';
 
@@ -15,10 +17,19 @@ const Length = {
     csToolsEventDetail,
     displaySetService,
     cornerstoneViewportService,
-    getValueTypeFromToolType
+    getValueTypeFromToolType,
+    customizationService
   ) => {
-    const { annotation, viewportId } = csToolsEventDetail;
+    const { annotation } = csToolsEventDetail;
     const { metadata, data, annotationUID } = annotation;
+
+    const isLocked = getIsLocked(annotationUID);
+    const isVisible = getIsVisible(annotationUID);
+    // const colorString = config.style.getStyleProperty('color', { annotationUID });
+
+    // color string is like 'rgb(255, 255, 255)' we need them to be in RGBA array [255, 255, 255, 255]
+    // Todo: this should be in a utility
+    // const color = colorString.replace('rgb(', '').replace(')', '').split(',').map(Number);
 
     if (!metadata || !data) {
       console.warn('Length tool: Missing metadata or data');
@@ -32,12 +43,11 @@ const Length = {
       throw new Error('Tool not supported');
     }
 
-    const { SOPInstanceUID, SeriesInstanceUID, StudyInstanceUID } =
-      getSOPInstanceAttributes(
-        referencedImageId,
-        cornerstoneViewportService,
-        viewportId
-      );
+    const { SOPInstanceUID, SeriesInstanceUID, StudyInstanceUID } = getSOPInstanceAttributes(
+      referencedImageId,
+      displaySetService,
+      annotation
+    );
 
     let displaySet;
 
@@ -47,28 +57,29 @@ const Length = {
         SeriesInstanceUID
       );
     } else {
-      displaySet = displaySetService.getDisplaySetsForSeries(SeriesInstanceUID);
+      displaySet = displaySetService.getDisplaySetsForSeries(SeriesInstanceUID)[0];
     }
 
-    const { points } = data.handles;
+    const { points, textBox } = data.handles;
 
-    const mappedAnnotations = getMappedAnnotations(
-      annotation,
-      displaySetService
-    );
+    const mappedAnnotations = getMappedAnnotations(annotation, displaySetService);
 
     const displayText = getDisplayText(mappedAnnotations, displaySet);
     const getReport = () =>
-      _getReport(mappedAnnotations, points, FrameOfReferenceUID);
+      _getReport(mappedAnnotations, points, FrameOfReferenceUID, customizationService);
 
     return {
       uid: annotationUID,
       SOPInstanceUID,
       FrameOfReferenceUID,
       points,
+      textBox,
+      isLocked,
+      isVisible,
       metadata,
       referenceSeriesUID: SeriesInstanceUID,
       referenceStudyUID: StudyInstanceUID,
+      referencedImageId,
       frameNumber: mappedAnnotations[0]?.frameNumber || 1,
       toolName: metadata.toolName,
       displaySetInstanceUID: displaySet.displaySetInstanceUID,
@@ -95,24 +106,16 @@ function getMappedAnnotations(annotation, displaySetService) {
   Object.keys(cachedStats).forEach(targetId => {
     const targetStats = cachedStats[targetId];
 
-    if (!referencedImageId) {
-      throw new Error(
-        'Non-acquisition plane measurement mapping not supported'
-      );
-    }
-
-    const { SOPInstanceUID, SeriesInstanceUID, frameNumber } =
-      getSOPInstanceAttributes(referencedImageId);
-
-    const displaySet = displaySetService.getDisplaySetForSOPInstanceUID(
-      SOPInstanceUID,
-      SeriesInstanceUID,
-      frameNumber
+    const { SOPInstanceUID, SeriesInstanceUID, frameNumber } = getSOPInstanceAttributes(
+      referencedImageId,
+      displaySetService,
+      annotation
     );
 
+    const displaySet = displaySetService.getDisplaySetsForSeries(SeriesInstanceUID)[0];
+
     const { SeriesNumber } = displaySet;
-    const { length } = targetStats;
-    const unit = 'mm';
+    const { length, unit = 'mm' } = targetStats;
 
     annotations.push({
       SeriesInstanceUID,
@@ -132,7 +135,7 @@ This function is used to convert the measurement data to a format that is
 suitable for the report generation (e.g. for the csv report). The report
 returns a list of columns and corresponding values.
 */
-function _getReport(mappedAnnotations, points, FrameOfReferenceUID) {
+function _getReport(mappedAnnotations, points, FrameOfReferenceUID, customizationService) {
   const columns = [];
   const values = [];
 
@@ -141,9 +144,11 @@ function _getReport(mappedAnnotations, points, FrameOfReferenceUID) {
   values.push('Cornerstone:Length');
 
   mappedAnnotations.forEach(annotation => {
-    const { length } = annotation;
-    columns.push(`Length (mm)`);
+    const { length, unit } = annotation;
+    columns.push(`Length`);
     values.push(length);
+    columns.push('Unit');
+    values.push(unit);
   });
 
   if (FrameOfReferenceUID) {
@@ -166,19 +171,19 @@ function _getReport(mappedAnnotations, points, FrameOfReferenceUID) {
 }
 
 function getDisplayText(mappedAnnotations, displaySet) {
+  const displayText = {
+    primary: [],
+    secondary: [],
+  };
+
   if (!mappedAnnotations || !mappedAnnotations.length) {
-    return '';
+    return displayText;
   }
 
-  const displayText = [];
+  // Length is the same for all series
+  const { length, SeriesNumber, SOPInstanceUID, frameNumber, unit } = mappedAnnotations[0];
 
-  // Area is the same for all series
-  const { length, SeriesNumber, SOPInstanceUID, frameNumber } =
-    mappedAnnotations[0];
-
-  const instance = displaySet.images.find(
-    image => image.SOPInstanceUID === SOPInstanceUID
-  );
+  const instance = displaySet.instances.find(image => image.SOPInstanceUID === SOPInstanceUID);
 
   let InstanceNumber;
   if (instance) {
@@ -188,11 +193,12 @@ function getDisplayText(mappedAnnotations, displaySet) {
   const instanceText = InstanceNumber ? ` I: ${InstanceNumber}` : '';
   const frameText = displaySet.isMultiFrame ? ` F: ${frameNumber}` : '';
 
-  if (length === null || length === undefined) return displayText;
+  if (length === null || length === undefined) {
+    return displayText;
+  }
   const roundedLength = utils.roundNumber(length, 2);
-  displayText.push(
-    `${roundedLength} mm (S: ${SeriesNumber}${instanceText}${frameText})`
-  );
+  displayText.primary.push(`${roundedLength} ${unit}`);
+  displayText.secondary.push(`S: ${SeriesNumber}${instanceText}${frameText}`);
 
   return displayText;
 }
