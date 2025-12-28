@@ -1,81 +1,67 @@
 // External
-
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import i18n from '@ohif/i18n';
 import { I18nextProvider } from 'react-i18next';
-import { BrowserRouter, type BrowserRouterProps } from 'react-router-dom';
-
+import { BrowserRouter } from 'react-router-dom';
 import Compose from './routes/Mode/Compose';
 import {
+  ServicesManager,
   ExtensionManager,
   CommandsManager,
   HotkeysManager,
-  ServiceProvidersManager,
-  SystemContextProvider,
-  ViewportRefsProvider,
 } from '@ohif/core';
 import {
-  ThemeWrapper as ThemeWrapperNext,
-  NotificationProvider,
-  ViewportGridProvider,
   DialogProvider,
-  CineProvider,
-  TooltipProvider,
-  Modal as ModalNext,
-  ManagedDialog,
+  Modal,
   ModalProvider,
+  SnackbarProvider,
+  ThemeWrapper,
   ViewportDialogProvider,
+  ViewportGridProvider,
+  CineProvider,
   UserAuthenticationProvider,
-} from '@ohif/ui-next';
+} from '@ohif/ui';
 // Viewer Project
 // TODO: Should this influence study list?
 import { AppConfigProvider } from '@state';
 import createRoutes from './routes';
 import appInit from './appInit.js';
 import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
-import { ShepherdJourneyProvider } from 'react-shepherd';
-import './App.css';
 
 let commandsManager: CommandsManager,
   extensionManager: ExtensionManager,
-  servicesManager: AppTypes.ServicesManager,
-  serviceProvidersManager: ServiceProvidersManager,
+  servicesManager: ServicesManager,
   hotkeysManager: HotkeysManager;
 
-const routerFutureFlags: BrowserRouterProps['future'] = {
-  v7_startTransition: true,
-  v7_relativeSplatPath: true,
+// Gets the GCP token on app load
+const getGcpToken = async () => {
+  try {
+    const name = "gcp-jwt-token=";
+    const cookieArray = document.cookie.split(';');
+
+    for (let i = 0; i < cookieArray.length; i++) {
+      let cookie = cookieArray[i].trim(); // Trim whitespace
+      if (cookie.indexOf(name) === 0) {
+        localStorage.setItem("gcp-jwt-token", cookie.substring(name.length).trim());
+      }
+    }
+  } catch (err) {
+    console.log("Unable to fetch JWT token from backend. Please try again. Error: " + err);
+  }
 };
 
-function App({
-  config = {
-    /**
-     * Relative route from domain root that OHIF instance is installed at.
-     * For example:
-     *
-     * Hosted at: https://ohif.org/where-i-host-the/viewer/
-     * Value: `/where-i-host-the/viewer/`
-     * */
-    routerBasename: '/',
-    /**
-     *
-     */
-    showLoadingIndicator: true,
-    showStudyList: true,
-    oidc: [],
-    extensions: [],
-  },
-  defaultExtensions = [],
-  defaultModes = [],
-}) {
+function App({ config, defaultExtensions, defaultModes }) {
   const [init, setInit] = useState(null);
   useEffect(() => {
-    const run = async () => {
-      appInit(config, defaultExtensions, defaultModes).then(setInit).catch(console.error);
-    };
-
-    run();
+    getGcpToken().then(() => {
+      const run = async () => {
+        appInit(config, defaultExtensions, defaultModes)
+          .then(setInit)
+          .catch(console.error);
+      };
+      run();
+    });
   }, []);
 
   if (!init) {
@@ -86,30 +72,26 @@ function App({
   commandsManager = init.commandsManager;
   extensionManager = init.extensionManager;
   servicesManager = init.servicesManager;
-  serviceProvidersManager = init.serviceProvidersManager;
   hotkeysManager = init.hotkeysManager;
 
   // Set appConfig
   const appConfigState = init.appConfig;
-  const { routerBasename, modes, dataSources, oidc, showStudyList } = appConfigState;
-
-  // get the maximum 3D texture size
-  const canvas = document.createElement('canvas');
-  const gl = canvas.getContext('webgl2');
-
-  if (gl) {
-    const max3DTextureSize = gl.getParameter(gl.MAX_3D_TEXTURE_SIZE);
-    appConfigState.max3DTextureSize = max3DTextureSize;
-  }
+  const {
+    routerBasename,
+    modes,
+    dataSources,
+    oidc,
+    showStudyList,
+  } = appConfigState;
 
   const {
     uiDialogService,
     uiModalService,
+    uiNotificationService,
     uiViewportDialogService,
     viewportGridService,
     cineService,
     userAuthenticationService,
-    uiNotificationService,
     customizationService,
   } = servicesManager.services;
 
@@ -117,28 +99,16 @@ function App({
     [AppConfigProvider, { value: appConfigState }],
     [UserAuthenticationProvider, { service: userAuthenticationService }],
     [I18nextProvider, { i18n }],
-    [ThemeWrapperNext],
-    [SystemContextProvider, { commandsManager, extensionManager, hotkeysManager, servicesManager }],
-    [ViewportRefsProvider],
+    [ThemeWrapper],
     [ViewportGridProvider, { service: viewportGridService }],
     [ViewportDialogProvider, { service: uiViewportDialogService }],
     [CineProvider, { service: cineService }],
-    [NotificationProvider, { service: uiNotificationService }],
-    [TooltipProvider],
-    [DialogProvider, { service: uiDialogService, dialog: ManagedDialog }],
-    [ModalProvider, { service: uiModalService, modal: ModalNext }],
-    [ShepherdJourneyProvider],
+    [SnackbarProvider, { service: uiNotificationService }],
+    [DialogProvider, { service: uiDialogService }],
+    [ModalProvider, { service: uiModalService, modal: Modal }],
   ];
-
-  // Loop through and register each of the service providers registered with the ServiceProvidersManager.
-  const providersFromManager = Object.entries(serviceProvidersManager.providers);
-  if (providersFromManager.length > 0) {
-    providersFromManager.forEach(([serviceName, provider]) => {
-      providers.push([provider, { service: servicesManager.services[serviceName] }]);
-    });
-  }
-
-  const CombinedProviders = ({ children }) => Compose({ components: providers, children });
+  const CombinedProviders = ({ children }) =>
+    Compose({ components: providers, children });
 
   let authRoutes = null;
 
@@ -169,10 +139,7 @@ function App({
 
   return (
     <CombinedProviders>
-      <BrowserRouter
-        basename={routerBasename}
-        future={routerFutureFlags}
-      >
+      <BrowserRouter basename={routerBasename}>
         {authRoutes}
         {appRoutes}
       </BrowserRouter>
@@ -193,9 +160,27 @@ App.propTypes = {
   /* Extensions that are "bundled" or "baked-in" to the application.
    * These would be provided at build time as part of they entry point. */
   defaultExtensions: PropTypes.array,
-  /* Modes that are "bundled" or "baked-in" to the application.
-   * These would be provided at build time as part of they entry point. */
-  defaultModes: PropTypes.array,
+};
+
+App.defaultProps = {
+  config: {
+    /**
+     * Relative route from domain root that OHIF instance is installed at.
+     * For example:
+     *
+     * Hosted at: https://ohif.org/where-i-host-the/viewer/
+     * Value: `/where-i-host-the/viewer/`
+     * */
+    routerBaseName: '/',
+    /**
+     *
+     */
+    showLoadingIndicator: true,
+    showStudyList: true,
+    oidc: [],
+    extensions: [],
+  },
+  defaultExtensions: [],
 };
 
 export default App;
