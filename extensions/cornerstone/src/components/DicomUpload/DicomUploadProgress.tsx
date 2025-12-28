@@ -1,12 +1,8 @@
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  ReactElement,
-} from 'react';
+import React, { useCallback, useEffect, useRef, useState, ReactElement } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Icon, ProgressLoadingBar } from '@ohif/ui';
+import { useSystem } from '@ohif/core';
+import { Button } from '@ohif/ui-next';
+import { Icons } from '@ohif/ui-next';
 import DicomFileUploader, {
   EVENTS,
   UploadStatus,
@@ -39,18 +35,19 @@ const BASE_INTERVAL_TIME = 15000;
 // calculate the upload rate.
 const UPLOAD_RATE_THRESHOLD = 75;
 
-const NO_WRAP_ELLIPSIS_CLASS_NAMES =
-  'text-ellipsis whitespace-nowrap overflow-hidden';
+const NO_WRAP_ELLIPSIS_CLASS_NAMES = 'text-ellipsis whitespace-nowrap overflow-hidden';
 
 function DicomUploadProgress({
   dicomFileUploaderArr,
   onComplete,
 }: DicomUploadProgressProps): ReactElement {
+  const { servicesManager } = useSystem();
+
+  const ProgressLoadingBar =
+    servicesManager.services.customizationService.getCustomization('ui.progressLoadingBar');
+
   const [totalUploadSize] = useState(
-    dicomFileUploaderArr.reduce(
-      (acc, fileUploader) => acc + fileUploader.getFileSize(),
-      0
-    )
+    dicomFileUploaderArr.reduce((acc, fileUploader) => acc + fileUploader.getFileSize(), 0)
   );
 
   const currentUploadSizeRef = useRef<number>(0);
@@ -83,15 +80,13 @@ function DicomUploadProgress({
     let intervalStartTime = Date.now();
 
     const setUploadRateRef = () => {
-      const uploadSizeFromStartOfInterval =
-        currentUploadSizeRef.current - intervalStartUploadSize;
+      const uploadSizeFromStartOfInterval = currentUploadSizeRef.current - intervalStartUploadSize;
 
       const now = Date.now();
       const timeSinceStartOfInterval = now - intervalStartTime;
 
       // Calculate and set the upload rate (ref)
-      uploadRateRef.current =
-        uploadSizeFromStartOfInterval / timeSinceStartOfInterval;
+      uploadRateRef.current = uploadSizeFromStartOfInterval / timeSinceStartOfInterval;
 
       // Reset the interval starting values.
       intervalStartUploadSize = currentUploadSizeRef.current;
@@ -134,28 +129,19 @@ function DicomUploadProgress({
       const updateProgress = (percentComplete: number) => {
         const previousFileUploadSize = currentFileUploadSize;
 
-        currentFileUploadSize = Math.round(
-          (percentComplete / 100) * fileUploader.getFileSize()
-        );
+        currentFileUploadSize = Math.round((percentComplete / 100) * fileUploader.getFileSize());
 
         currentUploadSizeRef.current = Math.min(
           totalUploadSize,
-          currentUploadSizeRef.current -
-            previousFileUploadSize +
-            currentFileUploadSize
+          currentUploadSizeRef.current - previousFileUploadSize + currentFileUploadSize
         );
 
-        setPercentComplete(
-          (currentUploadSizeRef.current / totalUploadSize) * 100
-        );
+        setPercentComplete((currentUploadSizeRef.current / totalUploadSize) * 100);
 
         if (uploadRateRef.current !== 0) {
-          const uploadSizeRemaining =
-            totalUploadSize - currentUploadSizeRef.current;
+          const uploadSizeRemaining = totalUploadSize - currentUploadSizeRef.current;
 
-          const timeRemaining = Math.round(
-            uploadSizeRemaining / uploadRateRef.current
-          );
+          const timeRemaining = Math.round(uploadSizeRemaining / uploadRateRef.current);
 
           if (currentTimeRemaining === null) {
             currentTimeRemaining = timeRemaining;
@@ -168,9 +154,7 @@ function DicomUploadProgress({
           // due to rounding, inaccuracies in the estimate and slight variations
           // in upload rates over time.
           if (timeRemaining < ONE_MINUTE) {
-            const currentSecondsRemaining = Math.ceil(
-              currentTimeRemaining / ONE_SECOND
-            );
+            const currentSecondsRemaining = Math.ceil(currentTimeRemaining / ONE_SECOND);
             const secondsRemaining = Math.ceil(timeRemaining / ONE_SECOND);
             const delta = secondsRemaining - currentSecondsRemaining;
             if (delta < 0 || delta > 2) {
@@ -181,9 +165,7 @@ function DicomUploadProgress({
           }
 
           if (timeRemaining < ONE_HOUR) {
-            const currentMinutesRemaining = Math.ceil(
-              currentTimeRemaining / ONE_MINUTE
-            );
+            const currentMinutesRemaining = Math.ceil(currentTimeRemaining / ONE_MINUTE);
             const minutesRemaining = Math.ceil(timeRemaining / ONE_MINUTE);
             const delta = minutesRemaining - currentMinutesRemaining;
             if (delta < 0 || delta > 2) {
@@ -199,9 +181,7 @@ function DicomUploadProgress({
         }
       };
 
-      const progressCallback = (
-        progressEvent: DicomFileUploaderProgressEvent
-      ) => {
+      const progressCallback = (progressEvent: DicomFileUploaderProgressEvent) => {
         updateProgress(progressEvent.percentComplete);
       };
 
@@ -249,16 +229,12 @@ function DicomUploadProgress({
 
     if (timeRemaining < ONE_MINUTE) {
       const secondsRemaining = Math.ceil(timeRemaining / ONE_SECOND);
-      return `${secondsRemaining} ${
-        secondsRemaining === 1 ? 'second' : 'seconds'
-      }`;
+      return `${secondsRemaining} ${secondsRemaining === 1 ? 'second' : 'seconds'}`;
     }
 
     if (timeRemaining < ONE_HOUR) {
       const minutesRemaining = Math.ceil(timeRemaining / ONE_MINUTE);
-      return `${minutesRemaining} ${
-        minutesRemaining === 1 ? 'minute' : 'minutes'
-      }`;
+      return `${minutesRemaining} ${minutesRemaining === 1 ? 'minute' : 'minutes'}`;
     }
 
     const hoursRemaining = Math.ceil(timeRemaining / ONE_HOUR);
@@ -278,39 +254,35 @@ function DicomUploadProgress({
   const showInfiniteProgressBar = useCallback((): boolean => {
     return (
       getPercentCompleteRounded() < 1 &&
-      (progressBarContainerRef?.current?.offsetWidth ?? 0) *
-        (percentComplete / 100) <
-        1
+      (progressBarContainerRef?.current?.offsetWidth ?? 0) * (percentComplete / 100) < 1
     );
   }, [getPercentCompleteRounded, percentComplete]);
 
   /**
-   * Gets the css style for the 'n of m' (files completed) text. The only css attribute
-   * of the style is width such that the 'n of m' is always a fixed width and thus
-   * as each file completes uploading the text on screen does not constantly shift
-   * left and right.
+   * Gets the CSS style for the 'n of m' (files completed) text.
+   * The width changes according to numFilesCompleted and can vary,
+   * e.g. "1 of 200", "10 of 200", "100 of 200" all have differents width.
    */
   const getNofMFilesStyle = useCallback(() => {
     // the number of digits accounts for the digits being on each side of the ' of '
-    const numDigits = 2 * dicomFileUploaderArr.length.toString().length;
-    // the number of digits + 2 spaces and 2 characters for ' of '
-    const numChars = numDigits + 4;
+    const numDigits =
+      numFilesCompleted.toString().length + dicomFileUploaderArr.length.toString().length;
+    // The number of digits + 3 additional characters (accounts for ' of ').
+    // Even though intuitively 4 should be better, this is the most accurate width.
+    // The font may play a part in this discrepancy.
+    const numChars = numDigits + 3;
     return { width: `${numChars}ch` };
-  }, []);
+  }, [numFilesCompleted]);
 
   const getNumCompletedAndTimeRemainingComponent = (): ReactElement => {
     return (
-      <div className="text-lg px-1 pb-4 h-14 flex bg-primary-dark items-center">
+      <div className="bg-muted flex h-14 items-center px-1 pb-4 text-lg text-white">
         {numFilesCompleted === dicomFileUploaderArr.length ? (
           <>
-            <span className={NO_WRAP_ELLIPSIS_CLASS_NAMES}>{`${
-              dicomFileUploaderArr.length
-            } ${
+            <span className={NO_WRAP_ELLIPSIS_CLASS_NAMES}>{`${dicomFileUploaderArr.length} ${
               dicomFileUploaderArr.length > 1 ? 'files' : 'file'
             } completed.`}</span>
             <Button
-              variant="contained"
-              color="primary"
               disabled={false}
               className="ml-auto"
               onClick={onComplete}
@@ -320,25 +292,24 @@ function DicomUploadProgress({
           </>
         ) : (
           <>
+            <div className="flex flex-wrap">
+              <span
+                style={getNofMFilesStyle()}
+                className={classNames(NO_WRAP_ELLIPSIS_CLASS_NAMES, 'text-right')}
+              >
+                {`${numFilesCompleted} of ${dicomFileUploaderArr.length}`}&nbsp;
+              </span>
+              <span className={NO_WRAP_ELLIPSIS_CLASS_NAMES}>{' files completed.'}</span>
+              <br />
+              <span>
+                {timeRemaining ? `Less than ${getFormattedTimeRemaining()} remaining. ` : ''}
+              </span>
+            </div>
+
             <span
-              style={getNofMFilesStyle()}
-              className={classNames(NO_WRAP_ELLIPSIS_CLASS_NAMES, 'text-end')}
-            >
-              {`${numFilesCompleted} of ${dicomFileUploaderArr.length}`}&nbsp;
-            </span>
-            <span className={NO_WRAP_ELLIPSIS_CLASS_NAMES}>
-              {' files completed.'}&nbsp;
-            </span>
-            <span className={NO_WRAP_ELLIPSIS_CLASS_NAMES}>
-              {timeRemaining
-                ? `Less than ${getFormattedTimeRemaining()} remaining. `
-                : ''}
-            </span>
-            <span
-              className={classNames(
-                NO_WRAP_ELLIPSIS_CLASS_NAMES,
-                'cursor-pointer text-primary-active hover:text-primary-light active:text-aqua-pale ml-auto'
-              )}
+              className={
+                'text-primary hover:text-highlight active:text-muted-foreground ml-auto cursor-pointer whitespace-nowrap'
+              }
               onClick={cancelAllUploads}
             >
               Cancel All Uploads
@@ -351,14 +322,13 @@ function DicomUploadProgress({
 
   const getShowFailedOnlyIconComponent = (): ReactElement => {
     return (
-      <div className="ml-auto flex justify-center w-6">
+      <div className="ml-auto flex w-6 justify-center">
         {numFails > 0 && (
-          <div
-            onClick={() =>
-              setShowFailedOnly(currentShowFailedOnly => !currentShowFailedOnly)
-            }
-          >
-            <Icon className="cursor-pointer" name="icon-status-alert"></Icon>
+          <div onClick={() => setShowFailedOnly(currentShowFailedOnly => !currentShowFailedOnly)}>
+            <Icons.ByName
+              className="cursor-pointer"
+              name="icon-status-alert"
+            ></Icons.ByName>
           </div>
         )}
       </div>
@@ -367,32 +337,29 @@ function DicomUploadProgress({
 
   const getPercentCompleteComponent = (): ReactElement => {
     return (
-      <div className="overflow-y-scroll ohif-scrollbar px-2 border-b border-secondary-light">
-        <div className="flex w-full p-2.5 items-center min-h-14">
+      <div className="ohif-scrollbar border-input overflow-y-scroll border-b px-2">
+        <div className="min-h-14 flex w-full items-center p-2.5">
           {numFilesCompleted === dicomFileUploaderArr.length ? (
             <>
-              <div className="text-xl text-primary-light">
+              <div className="text-highlight text-xl">
                 {numFails > 0
-                  ? `Completed with ${numFails} ${
-                      numFails > 1 ? 'errors' : 'error'
-                    }!`
+                  ? `Completed with ${numFails} ${numFails > 1 ? 'errors' : 'error'}!`
                   : 'Completed!'}
               </div>
               {getShowFailedOnlyIconComponent()}
             </>
           ) : (
             <>
-              <div ref={progressBarContainerRef} className="flex-grow">
+              <div
+                ref={progressBarContainerRef}
+                className="flex-grow"
+              >
                 <ProgressLoadingBar
-                  progress={
-                    showInfiniteProgressBar()
-                      ? undefined
-                      : Math.min(100, percentComplete)
-                  }
+                  progress={showInfiniteProgressBar() ? undefined : Math.min(100, percentComplete)}
                 ></ProgressLoadingBar>
               </div>
-              <div className="w-24 ml-1 flex items-center">
-                <div className="w-10 text-right">{`${getPercentCompleteRounded()}%`}</div>
+              <div className="ml-1 flex w-24 items-center">
+                <div className="text-foreground w-10 text-right">{`${getPercentCompleteRounded()}%`}</div>
                 {getShowFailedOnlyIconComponent()}
               </div>
             </>
@@ -403,16 +370,15 @@ function DicomUploadProgress({
   };
 
   return (
-    <div className="flex flex-col grow">
+    <div className="flex grow flex-col">
       {getNumCompletedAndTimeRemainingComponent()}
-      <div className="flex flex-col bg-black text-lg overflow-hidden grow">
+      <div className="flex grow flex-col overflow-hidden bg-black text-lg">
         {getPercentCompleteComponent()}
-        <div className="overflow-y-scroll ohif-scrollbar px-2 grow h-1">
+        <div className="ohif-scrollbar h-1 grow overflow-y-scroll px-2">
           {dicomFileUploaderArr
             .filter(
               dicomFileUploader =>
-                !showFailedOnly ||
-                dicomFileUploader.getStatus() === UploadStatus.Failed
+                !showFailedOnly || dicomFileUploader.getStatus() === UploadStatus.Failed
             )
             .map(dicomFileUploader => (
               <DicomUploadProgressItem
@@ -427,9 +393,7 @@ function DicomUploadProgress({
 }
 
 DicomUploadProgress.propTypes = {
-  dicomFileUploaderArr: PropTypes.arrayOf(
-    PropTypes.instanceOf(DicomFileUploader)
-  ).isRequired,
+  dicomFileUploaderArr: PropTypes.arrayOf(PropTypes.instanceOf(DicomFileUploader)).isRequired,
   onComplete: PropTypes.func.isRequired,
 };
 

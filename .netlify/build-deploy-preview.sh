@@ -14,12 +14,12 @@ node -v
 # Build && Move PWA Output
 yarn run build:ci
 mkdir -p ./.netlify/www/pwa
-mv platform/viewer/dist/* .netlify/www/pwa -v
+mv platform/app/dist/* .netlify/www/pwa -v
 echo 'Web application built and copied'
 
 # Build && Move Docusaurus Output (for the docs themselves)
 cd platform/docs
-yarn install
+yarn install --frozen-lockfile
 yarn run build
 cd ../..
 mkdir -p ./.netlify/www/docs

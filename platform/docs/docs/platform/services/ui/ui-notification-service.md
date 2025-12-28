@@ -1,6 +1,8 @@
 ---
 sidebar_position: 2
 sidebar_label: UI Notification Service
+title: UI Notification Service
+summary: Documentation for OHIF's UI Notification Service, which provides a standardized way to display non-intrusive, contextual notifications for timely and relevant information to users throughout the application.
 ---
 # UI Notification Service
 
@@ -19,7 +21,7 @@ article: ["How To Design Notifications For Better UX"][ux-article]
 
 
 <div style={{padding:"56.25% 0 0 0", position:"relative"}}>
-    <iframe src="https://player.vimeo.com/video/549260975?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen style= {{ position:"absolute",top:0,left:0,width:"100%",height:"100%"}} title="measurement-report"></iframe>
+    <iframe src="https://player.vimeo.com/video/843233715?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen style= {{ position:"absolute",top:0,left:0,width:"100%",height:"100%"}} title="measurement-report"></iframe>
 </div>
 
 
@@ -32,12 +34,14 @@ is expected to support, [check out it's interface in `@ohif/core`][interface]
 | ---------- | --------------------------------------- |
 | `hide()`   | Hides the specified notification        |
 | `show()`   | Creates and displays a new notification |
+| `customComponent()`   | Overrides the default Notification component |
 
 ## Implementations
 
 | Implementation                           | Consumer                                  |
 | ---------------------------------------- | ----------------------------------------- |
 | [Snackbar Provider][snackbar-provider]\* | [SnackbarContainer][snackbar-container]\* |
+| customComponent | user extensions via `setServiceImplementation({customComponent: Snackbar})` |
 
 `*` - Denotes maintained by OHIF
 

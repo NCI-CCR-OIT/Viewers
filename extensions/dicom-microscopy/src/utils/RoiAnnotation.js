@@ -1,6 +1,7 @@
 import areaOfPolygon from './areaOfPolygon';
 
 import { PubSubService } from '@ohif/core';
+import i18n from '@ohif/i18n';
 
 const EVENTS = {
   LABEL_UPDATED: 'labelUpdated',
@@ -13,13 +14,7 @@ const EVENTS = {
  * Represents a single annotation for the Microscopy Viewer
  */
 class RoiAnnotation extends PubSubService {
-  constructor(
-    roiGraphic,
-    studyInstanceUID,
-    seriesInstanceUID,
-    label = '',
-    viewState = null
-  ) {
+  constructor(roiGraphic, studyInstanceUID, seriesInstanceUID, label = '', viewState = null) {
     super(EVENTS);
     this.uid = roiGraphic.uid;
     this.roiGraphic = roiGraphic;
@@ -34,9 +29,7 @@ class RoiAnnotation extends PubSubService {
     const roiGraphic = this.roiGraphic;
 
     const roiGraphicSymbols = Object.getOwnPropertySymbols(roiGraphic);
-    const _scoord3d = roiGraphicSymbols.find(
-      s => String(s) === 'Symbol(scoord3d)'
-    );
+    const _scoord3d = roiGraphicSymbols.find(s => String(s) === 'Symbol(scoord3d)');
 
     return roiGraphic[_scoord3d];
   }
@@ -45,9 +38,7 @@ class RoiAnnotation extends PubSubService {
     const scoord3d = this.getScoord3d();
     const scoord3dSymbols = Object.getOwnPropertySymbols(scoord3d);
 
-    const _coordinates = scoord3dSymbols.find(
-      s => String(s) === 'Symbol(coordinates)'
-    );
+    const _coordinates = scoord3dSymbols.find(s => String(s) === 'Symbol(coordinates)');
 
     const coordinates = scoord3d[_coordinates];
     return coordinates;
@@ -161,7 +152,7 @@ class RoiAnnotation extends PubSubService {
   /**
    * Returns the geometry type of the annotation concatenated with the label
    * defined for the annotation.
-   * Difference with getDetailedLabel() is that this will return empty string for empy
+   * Difference with getDetailedLabel() is that this will return empty string for empty
    * label.
    *
    * @returns {String} Text with geometry type and label
@@ -178,7 +169,8 @@ class RoiAnnotation extends PubSubService {
    * @returns {String} Text with geometry type and label
    */
   getDetailedLabel() {
-    const label = this.label ? `${this.label}` : '(empty)';
+    const translatedEmpty = i18n?.t('MeasurementTable:empty') || '(empty)';
+    const label = this.label ? `${this.label}` : translatedEmpty;
     return label;
   }
 

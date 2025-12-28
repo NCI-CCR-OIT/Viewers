@@ -1,5 +1,5 @@
 import getAttribute from './getAttribute.js';
-import getAuthorizationHeader from './getAuthorizationHeader.js';
+import getAuthorizationHeader from './getAuthorizationHeader';
 import getModalities from './getModalities.js';
 import getName from './getName.js';
 import getNumber from './getNumber.js';
@@ -14,13 +14,6 @@ const DICOMWeb = {
   getString,
 };
 
-export {
-  getAttribute,
-  getAuthorizationHeader,
-  getModalities,
-  getName,
-  getNumber,
-  getString,
-};
+export { getAttribute, getAuthorizationHeader, getModalities, getName, getNumber, getString };
 
 export default DICOMWeb;

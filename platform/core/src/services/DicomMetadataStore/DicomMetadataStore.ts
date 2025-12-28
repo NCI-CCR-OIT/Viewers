@@ -2,6 +2,7 @@ import dcmjs from 'dcmjs';
 
 import pubSubServiceInterface from '../_shared/pubSubServiceInterface';
 import createStudyMetadata from './createStudyMetadata';
+import addProxyFields from '../../utils/addProxyFields';
 
 const EVENTS = {
   STUDY_ADDED: 'event::dicomMetadataStore:studyAdded',
@@ -49,28 +50,54 @@ const _model = {
   studies: [],
 };
 
+let metaDataProvider;
+
+function _setMetaDataProvider(metaData) {
+  metaDataProvider = metaData;
+}
+
 function _getStudyInstanceUIDs() {
   return _model.studies.map(aStudy => aStudy.StudyInstanceUID);
 }
 
+/**
+ * Gets a study (a collection of series) using it's StudyInstanceUID
+ * @param {*} StudyInstanceUID - Unique Identifier for the study
+ * @returns {*} A study object
+ */
 function _getStudy(StudyInstanceUID) {
-  return _model.studies.find(
-    aStudy => aStudy.StudyInstanceUID === StudyInstanceUID
-  );
+  return _model.studies.find(aStudy => aStudy.StudyInstanceUID === StudyInstanceUID);
 }
 
+/**
+ * Gets a series (a collection of images) using both
+ * the Study and Series InstanceUID's
+ * @param {*} StudyInstanceUID - Unique Identifier for the study
+ * @param {*} SeriesInstanceUID - Unique Identifier for the series
+ * @returns {*} A series object
+ */
 function _getSeries(StudyInstanceUID, SeriesInstanceUID) {
+  if (!StudyInstanceUID) {
+    const series = _model.studies.map(study => study.series).flat();
+    return series.find(aSeries => aSeries.SeriesInstanceUID === SeriesInstanceUID);
+  }
+
   const study = _getStudy(StudyInstanceUID);
 
   if (!study) {
     return;
   }
 
-  return study.series.find(
-    aSeries => aSeries.SeriesInstanceUID === SeriesInstanceUID
-  );
+  return study.series.find(aSeries => aSeries.SeriesInstanceUID === SeriesInstanceUID);
 }
 
+/**
+ * Gets an instance (a single image or object)
+ * @param {*} StudyInstanceUID - Unique Identifier for the study
+ * @param {*} SeriesInstanceUID - Unique Identifier for the series
+ * @param {*} SOPInstanceUID Unique Identifier for a specific instance
+ * @returns an instance object
+ */
 function _getInstance(StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID) {
   const series = _getSeries(StudyInstanceUID, SeriesInstanceUID);
 
@@ -78,12 +105,20 @@ function _getInstance(StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID) {
     return;
   }
 
-  return series.instances.find(
-    instance => instance.SOPInstanceUID === SOPInstanceUID
-  );
+  return series.getInstance(SOPInstanceUID);
 }
 
+/**
+ * Gets the frame module from the OHIF metadata provider, and then
+ * uses the study/series/instance uids to get the instance data.
+ */
 function _getInstanceByImageId(imageId) {
+  const metadataResult = metaDataProvider?.get('frameModule', imageId);
+  if (metadataResult) {
+    const { studyInstanceUID, seriesInstanceUID, sopInstanceUID } = metadataResult;
+    return _getInstance(studyInstanceUID, seriesInstanceUID, sopInstanceUID);
+  }
+  console.warn('No metadata result found for', imageId, 'looking through instances');
   for (const study of _model.studies) {
     for (const series of study.series) {
       for (const instance of series.instances) {
@@ -102,20 +137,14 @@ function _getInstanceByImageId(imageId) {
  * @param {*} metadata metadata inform of key value pairs
  * @returns
  */
-function _updateMetadataForSeries(
-  StudyInstanceUID,
-  SeriesInstanceUID,
-  metadata
-) {
+function _updateMetadataForSeries(StudyInstanceUID, SeriesInstanceUID, metadata) {
   const study = _getStudy(StudyInstanceUID);
 
   if (!study) {
     return;
   }
 
-  const series = study.series.find(
-    aSeries => aSeries.SeriesInstanceUID === SeriesInstanceUID
-  );
+  const series = study.series.find(aSeries => aSeries.SeriesInstanceUID === SeriesInstanceUID);
 
   const { instances } = series;
   // update all instances metadata for this series with the new metadata
@@ -149,9 +178,7 @@ const BaseImplementation = {
 
     // If Arraybuffer, parse to DICOMJSON before naturalizing.
     if (dicomJSONDatasetOrP10ArrayBuffer instanceof ArrayBuffer) {
-      const dicomData = dcmjs.data.DicomMessage.readFile(
-        dicomJSONDatasetOrP10ArrayBuffer
-      );
+      const dicomData = dcmjs.data.DicomMessage.readFile(dicomJSONDatasetOrP10ArrayBuffer);
 
       dicomJSONDataset = dicomData.dict;
     } else {
@@ -161,32 +188,36 @@ const BaseImplementation = {
     let naturalizedDataset;
 
     if (dicomJSONDataset['SeriesInstanceUID'] === undefined) {
-      naturalizedDataset = dcmjs.data.DicomMetaDictionary.naturalizeDataset(
-        dicomJSONDataset
-      );
+      naturalizedDataset = dcmjs.data.DicomMetaDictionary.naturalizeDataset(dicomJSONDataset);
     } else {
       naturalizedDataset = dicomJSONDataset;
     }
 
-    const { StudyInstanceUID } = naturalizedDataset;
+    const { StudyInstanceUID, NumberOfFrames: numberOfFrames } = naturalizedDataset;
 
-    let study = _model.studies.find(
-      study => study.StudyInstanceUID === StudyInstanceUID
-    );
+    let study = _model.studies.find(study => study.StudyInstanceUID === StudyInstanceUID);
 
     if (!study) {
       _model.studies.push(createStudyMetadata(StudyInstanceUID));
       study = _model.studies[_model.studies.length - 1];
     }
 
+    naturalizedDataset =
+      numberOfFrames > 1 ? addProxyFields(naturalizedDataset) : naturalizedDataset;
+
     study.addInstanceToSeries(naturalizedDataset);
   },
   addInstances(instances, madeInClient = false) {
-    const { StudyInstanceUID, SeriesInstanceUID } = instances[0];
+    const { StudyInstanceUID, SeriesInstanceUID, NumberOfFrames } = instances[0];
+    // For multiframe images (NumberOfFrames > 1), wrap each instance with a metadata proxy
+    // to enable fallback access for key image plane fields. This allows fields like
+    // ImagePositionPatient, ImageOrientationPatient, and PixelSpacing to be transparently
+    // resolved from parent or shared metadata if they are not directly present on the instance directly
+    if (NumberOfFrames > 1) {
+      instances = instances.map(instance => addProxyFields(instance));
+    }
 
-    let study = _model.studies.find(
-      study => study.StudyInstanceUID === StudyInstanceUID
-    );
+    let study = _model.studies.find(study => study.StudyInstanceUID === StudyInstanceUID);
 
     if (!study) {
       _model.studies.push(createStudyMetadata(StudyInstanceUID));
@@ -206,7 +237,23 @@ const BaseImplementation = {
       madeInClient,
     });
   },
+  updateSeriesMetadata(seriesMetadata) {
+    const { StudyInstanceUID, SeriesInstanceUID } = seriesMetadata;
+    const series = _getSeries(StudyInstanceUID, SeriesInstanceUID);
+    if (!series) {
+      return;
+    }
+
+    const study = _getStudy(StudyInstanceUID);
+    if (study) {
+      study.setSeriesMetadata(SeriesInstanceUID, seriesMetadata);
+    }
+  },
   addSeriesMetadata(seriesSummaryMetadata, madeInClient = false) {
+    if (!seriesSummaryMetadata || !seriesSummaryMetadata.length || !seriesSummaryMetadata[0]) {
+      return;
+    }
+
     const { StudyInstanceUID } = seriesSummaryMetadata[0];
     let study = _getStudy(StudyInstanceUID);
     if (!study) {
@@ -230,15 +277,14 @@ const BaseImplementation = {
 
     this._broadcastEvent(EVENTS.SERIES_ADDED, {
       StudyInstanceUID,
+      seriesSummaryMetadata,
       madeInClient,
     });
   },
   addStudy(study) {
     const { StudyInstanceUID } = study;
 
-    const existingStudy = _model.studies.find(
-      study => study.StudyInstanceUID === StudyInstanceUID
-    );
+    const existingStudy = _model.studies.find(study => study.StudyInstanceUID === StudyInstanceUID);
 
     if (!existingStudy) {
       const newStudy = createStudyMetadata(StudyInstanceUID);
@@ -260,6 +306,7 @@ const BaseImplementation = {
   getInstance: _getInstance,
   getInstanceByImageId: _getInstanceByImageId,
   updateMetadataForSeries: _updateMetadataForSeries,
+  setMetaDataProvider: _setMetaDataProvider,
 };
 const DicomMetadataStore = Object.assign(
   // get study
