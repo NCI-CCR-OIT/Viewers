@@ -1,8 +1,9 @@
 {
   "tasksRunnerOptions": {
     "default": {
-      "runner": "nx/tasks-runners/default",
+      "runner": "nx-cloud",
       "options": {
+        "useDaemonProcess": false,
         "cacheableOperations": [
           "dev",
           "build",
@@ -10,6 +11,7 @@
           "test:unit:ci",
           "test",
           "test:e2e",
+          "test:e2e:ci",
           "test:e2e:local",
           "test:e2e:dist",
           "test:e2e:serve",
@@ -20,7 +22,8 @@
           "build:viewer:qa",
           "build:viewer:demo",
           "build"
-        ]
+        ],
+        "accessToken": "NTgyZWU3NjUtNTI1Ny00YzBjLThjMTgtMzc4ZmViZThjNTM2fHJlYWQtd3JpdGU="
       }
     }
   },
@@ -45,9 +48,9 @@
         "^test:e2e"
       ]
     },
-    "test:e2e:headed": {
+    "test:e2e:ci": {
       "dependsOn": [
-        "^test:e2e:headed"
+        "^test:e2e:ci"
       ]
     },
     "test:e2e:local": {
@@ -67,19 +70,8 @@
     },
     "build": {
       "outputs": [
-        "{projectRoot}/platform/app/dist"
+        "{projectRoot}/platform/viewer/dist"
       ]
     }
-  },
-  "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "sharedGlobals"
-    ],
-    "sharedGlobals": [],
-    "production": [
-      "default"
-    ]
   }
 }

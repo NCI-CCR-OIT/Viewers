@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "baseUrl": "./",
+    "allowJs": true,
     "checkJs": true,
     "isolatedModules": true,
     "emitDeclarationOnly": true,
