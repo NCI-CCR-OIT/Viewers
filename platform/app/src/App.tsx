@@ -49,7 +49,7 @@ const routerFutureFlags: BrowserRouterProps['future'] = {
 };
 
 // Gets the GCP token on app load
-const getGcpToken = async () => {
+export const getGcpToken = async () => {
   try {
     const name = 'gcp-jwt-token=';
     const cookieArray = document.cookie.split(';');

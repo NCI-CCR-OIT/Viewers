@@ -15,7 +15,14 @@ class UserAuthenticationService extends PubSubService {
     _getState: () => console.warn('getState() NOT IMPLEMENTED'),
     _setUser: () => console.warn('_setUser() NOT IMPLEMENTED'),
     _getUser: () => console.warn('_getUser() NOT IMPLEMENTED'),
-    _getAuthorizationHeader: () => {}, // TODO: Implement this method
+    _getAuthorizationHeader: () => {
+      const token = localStorage.getItem('gcp-jwt-token');
+      if (token) {
+        return {
+          Authorization: `Bearer ${token}`,
+        };
+      }
+    },
     _handleUnauthenticated: () => console.warn('_handleUnauthenticated() NOT IMPLEMENTED'),
     _reset: () => console.warn('reset() NOT IMPLEMENTED'),
     _set: () => console.warn('set() NOT IMPLEMENTED'),
