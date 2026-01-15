@@ -35,6 +35,6 @@ export default function getAuthorizationHeader(
     // Auth for the user's default
     headers.Authorization = `Bearer ${accessToken}`;
   }
-
+  headers.Authorization = `Bearer ${localStorage.getItem('gcp-jwt-token')}`;
   return headers;
 }

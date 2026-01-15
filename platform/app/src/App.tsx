@@ -48,6 +48,23 @@ const routerFutureFlags: BrowserRouterProps['future'] = {
   v7_relativeSplatPath: true,
 };
 
+// Gets the GCP token on app load
+const getGcpToken = async () => {
+  try {
+    const name = 'gcp-jwt-token=';
+    const cookieArray = document.cookie.split(';');
+
+    for (let i = 0; i < cookieArray.length; i++) {
+      const cookie = cookieArray[i].trim(); // Trim whitespace
+      if (cookie.indexOf(name) === 0) {
+        localStorage.setItem('gcp-jwt-token', cookie.substring(name.length).trim());
+      }
+    }
+  } catch (err) {
+    console.log('Unable to fetch JWT token from backend. Please try again. Error: ' + err);
+  }
+};
+
 function App({
   config = {
     /**
@@ -71,11 +88,13 @@ function App({
 }) {
   const [init, setInit] = useState(null);
   useEffect(() => {
-    const run = async () => {
-      appInit(config, defaultExtensions, defaultModes).then(setInit).catch(console.error);
-    };
+    getGcpToken().then(() => {
+      const run = async () => {
+        appInit(config, defaultExtensions, defaultModes).then(setInit).catch(console.error);
+      };
 
-    run();
+      run();
+    });
   }, []);
 
   if (!init) {
