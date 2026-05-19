@@ -14,6 +14,12 @@
 # Dependencies
 **/node_modules/
 
+# Bun lockfiles (Docker build uses yarn; Nx/Lerna prefer bun when bun.lock is present)
+bun.lock
+bun.lockb
+bunfig.toml
+bunfig.update-lockfile.toml
+
 # Root
 README.md
 Dockerfile

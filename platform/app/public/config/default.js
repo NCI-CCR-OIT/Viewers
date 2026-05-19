@@ -119,6 +119,46 @@ window.config = {
         supportsFuzzyMatching: true,
         supportsWildcard: false,
         dicomUploadEnabled: true,
+        omitQuotationForMultipartRequest: true,
+        bulkDataURI: {
+          enabled: true,
+        },
+      },
+    },
+
+    {
+      namespace: '@ohif/extension-default.dataSourcesModule.dicomwebproxy',
+      sourceName: 'dicomwebproxy',
+      configuration: {
+        friendlyName: 'dicomweb delegating proxy',
+        name: 'dicomwebproxy',
+        // Security controls for runtime ?url=... datasource loading:
+        // In authenticated environments, runtime ?url origins must be allowlisted:
+        // dangerouslyAllowedOriginsForAuthenticatedEnvironments: [
+        //   'https://config.example.com',
+        //   'http://localhost:5000',
+        // ],
+      },
+    },
+    {
+      namespace: '@ohif/extension-default.dataSourcesModule.dicomjson',
+      sourceName: 'dicomjson',
+      configuration: {
+        friendlyName: 'dicom json',
+        name: 'json',
+        // Security controls for runtime ?url=... datasource loading:
+        // In authenticated environments, runtime ?url origins must be allowlisted:
+        // dangerouslyAllowedOriginsForAuthenticatedEnvironments: [
+        //   'https://config.example.com',
+        //   'http://localhost:5000',
+        // ],
+      },
+    },
+    {
+      namespace: '@ohif/extension-default.dataSourcesModule.dicomlocal',
+      sourceName: 'dicomlocal',
+      configuration: {
+        friendlyName: 'dicom local',
       },
     },
   ],
