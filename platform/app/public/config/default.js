@@ -4,6 +4,9 @@ window.config = {
   name: 'config/default.js',
   routerBasename: null,
   // whiteLabeling: {},
+  investigationalUseDialog: {
+    option: 'never',
+  },
   extensions: [],
   modes: [],
   customizationService: {},
