@@ -1,0 +1,89 @@
+name: Build and Push OHIF to ECR
+
+on:
+  push:
+    branches:
+      - mib-air-release
+      - mib-air-release-*
+  pull_request:
+    branches:
+      - mib-air-release
+      - mib-air-release-*
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on:
+      - codebuild-MIBAIR-UI-${{ github.run_id }}-${{ github.run_attempt }}
+
+    env:
+      AWS_REGION: us-east-1
+      ECR_REGISTRY: 729017761751.dkr.ecr.us-east-1.amazonaws.com
+      IMAGE_NAME: 729017761751.dkr.ecr.us-east-1.amazonaws.com/mib-air-ohif-viewer
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Compute tags
+        id: meta
+        shell: bash
+        env:
+          BRANCH_NAME:
+            ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
+        run: |
+          branch="$BRANCH_NAME"
+          should_build=false
+          image_tags=""
+
+          if [[ "$branch" == "mib-air-release" ]]; then
+            should_build=true
+            image_tags="latest"
+          elif [[ "$branch" =~ ^mib-air-release-.*$ ]]; then
+            should_build=true
+            image_tags=$'next\ndev'
+          fi
+
+          {
+            echo "should_build=$should_build"
+            echo "image_tags<<EOF"
+            printf '%s\n' "$image_tags"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Login to ECR
+        if: github.event_name == 'push' && steps.meta.outputs.should_build == 'true'
+        shell: bash
+        run: |
+          aws ecr get-login-password --region "$AWS_REGION" \
+            | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+
+      - name: Build image
+        if: steps.meta.outputs.should_build == 'true'
+        shell: bash
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.image_tags }}
+        run: |
+          first_tag="$(printf '%s\n' "$IMAGE_TAGS" | sed -n '1p')"
+          docker build -f Dockerfile-MIB-AIR -t "$IMAGE_NAME:$first_tag" .
+
+          while IFS= read -r tag; do
+            [[ -z "$tag" || "$tag" == "$first_tag" ]] && continue
+            docker tag "$IMAGE_NAME:$first_tag" "$IMAGE_NAME:$tag"
+          done <<< "$IMAGE_TAGS"
+
+      - name: Push image tags
+        if: github.event_name == 'push' && steps.meta.outputs.should_build == 'true'
+        shell: bash
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.image_tags }}
+        run: |
+          while IFS= read -r tag; do
+            [[ -z "$tag" ]] && continue
+            docker push "$IMAGE_NAME:$tag"
+          done <<< "$IMAGE_TAGS"
