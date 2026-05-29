@@ -116,7 +116,7 @@ const ptAXIAL: AppTypes.HangingProtocol.Viewport = {
       cameraPositionSync('axialSync'),
       {
         type: 'voi',
-        id: 'ptWLSync',
+        id: 'ptRowWLSync',
         source: true,
         target: true,
         options: {
@@ -140,7 +140,8 @@ const ptAXIAL: AppTypes.HangingProtocol.Viewport = {
     {
       options: {
         voi: {
-          custom: 'getPTVOIRange',
+          windowWidth: 8,
+          windowCenter: 4,
         },
         voiInverted: true,
       },
@@ -160,7 +161,7 @@ const ptSAGITTAL: AppTypes.HangingProtocol.Viewport = {
       cameraPositionSync('sagittalSync'),
       {
         type: 'voi',
-        id: 'ptWLSync',
+        id: 'ptRowWLSync',
         source: true,
         target: true,
         options: {
@@ -184,7 +185,8 @@ const ptSAGITTAL: AppTypes.HangingProtocol.Viewport = {
     {
       options: {
         voi: {
-          custom: 'getPTVOIRange',
+          windowWidth: 8,
+          windowCenter: 4,
         },
         voiInverted: true,
       },
@@ -204,7 +206,7 @@ const ptCORONAL: AppTypes.HangingProtocol.Viewport = {
       cameraPositionSync('coronalSync'),
       {
         type: 'voi',
-        id: 'ptWLSync',
+        id: 'ptRowWLSync',
         source: true,
         target: true,
         options: {
@@ -228,7 +230,8 @@ const ptCORONAL: AppTypes.HangingProtocol.Viewport = {
     {
       options: {
         voi: {
-          custom: 'getPTVOIRange',
+          windowWidth: 8,
+          windowCenter: 4,
         },
         voiInverted: true,
       },
@@ -285,7 +288,7 @@ const fusionAXIAL: AppTypes.HangingProtocol.Viewport = {
       id: 'ptDisplaySet',
       options: {
         colormap: {
-          name: 'hsv',
+          name: 'red_hot',
           opacity: [
             { value: 0, opacity: 0 },
             { value: 0.1, opacity: 0.8 },
@@ -293,7 +296,8 @@ const fusionAXIAL: AppTypes.HangingProtocol.Viewport = {
           ],
         },
         voi: {
-          custom: 'getPTVOIRange',
+          windowWidth: 8,
+          windowCenter: 4,
         },
       },
     },
@@ -348,7 +352,7 @@ const fusionSAGITTAL = {
       id: 'ptDisplaySet',
       options: {
         colormap: {
-          name: 'hsv',
+          name: 'red_hot',
           opacity: [
             { value: 0, opacity: 0 },
             { value: 0.1, opacity: 0.8 },
@@ -356,7 +360,8 @@ const fusionSAGITTAL = {
           ],
         },
         voi: {
-          custom: 'getPTVOIRange',
+          windowWidth: 8,
+          windowCenter: 4,
         },
       },
     },
@@ -411,7 +416,7 @@ const fusionCORONAL = {
       id: 'ptDisplaySet',
       options: {
         colormap: {
-          name: 'hsv',
+          name: 'red_hot',
           opacity: [
             { value: 0, opacity: 0 },
             { value: 0.1, opacity: 0.8 },
@@ -419,7 +424,8 @@ const fusionCORONAL = {
           ],
         },
         voi: {
-          custom: 'getPTVOIRange',
+          windowWidth: 8,
+          windowCenter: 4,
         },
       },
     },

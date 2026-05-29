@@ -4,6 +4,7 @@ import { id } from './id.js';
 import initToolGroups from './initToolGroups.js';
 import setCrosshairsConfiguration from './utils/setCrosshairsConfiguration.js';
 import setFusionActiveVolume from './utils/setFusionActiveVolume.js';
+import mibAirCustomConfig from './utils/mibAirCustomConfig';
 import i18n from 'i18next';
 
 const { MetadataProvider } = classes;
@@ -88,6 +89,7 @@ function modeFactory({ modeConfiguration }) {
       );
 
       unsubscriptions.push(unsubscribe);
+      unsubscriptions.push(...mibAirCustomConfig({ servicesManager }));
       toolbarService.register(toolbarButtons);
       toolbarService.updateSection(toolbarService.sections.primary, [
         'MeasurementTools',
