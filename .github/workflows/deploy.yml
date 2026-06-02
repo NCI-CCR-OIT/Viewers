@@ -1,0 +1,124 @@
+name: Deploy OHIF to ECS
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_environment:
+        description: Target deploy environment
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - stage
+          - production
+      deploy_tag:
+        description: Image tag to deploy (dev, test, stage, latest, or custom tag)
+        required: true
+        default: latest
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on:
+      - codebuild-CCR-OSCRI-GitHub-Actions-${{ github.run_id }}-${{ github.run_attempt }}
+
+    env:
+      AWS_REGION: us-east-1
+      IMAGE_NAME: 729017761751.dkr.ecr.us-east-1.amazonaws.com/mib-air-ohif-viewer
+      NON_PROD_ROLE_ARN: arn:aws:iam::272164549124:role/ccr-jenkins-woker-node-nonprod-role
+      PROD_ROLE_ARN: arn:aws:iam::514576275437:role/ccr-jenkins-woker-node-prod-role
+      SESSION_NAME: GitHubActionsSession
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Initialize deploy variables
+        id: init
+        shell: bash
+        env:
+          DEPLOY_ENVIRONMENT: ${{ inputs.deploy_environment }}
+          DEPLOY_TAG_INPUT: ${{ inputs.deploy_tag }}
+        run: |
+          # Keep only safe tag characters and normalize separators/case.
+          sanitized_tag="$(echo "$DEPLOY_TAG_INPUT" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed 's#/#-#g' \
+            | sed 's#[^a-z0-9_.-]#-#g')"
+
+          if [[ -z "$sanitized_tag" ]]; then
+            echo "Sanitized deploy tag is empty." >&2
+            exit 1
+          fi
+
+          echo "sanitized_deploy_tag=$sanitized_tag" >> "$GITHUB_OUTPUT"
+
+          case "$DEPLOY_ENVIRONMENT" in
+            dev)
+              echo "target_role_arn=$NON_PROD_ROLE_ARN" >> "$GITHUB_OUTPUT"
+              echo "target_cluster=ccr-oit-dev-cluster" >> "$GITHUB_OUTPUT"
+              echo "target_image_tag=dev" >> "$GITHUB_OUTPUT"
+              ;;
+            test)
+              echo "target_role_arn=$NON_PROD_ROLE_ARN" >> "$GITHUB_OUTPUT"
+              echo "target_cluster=ccr-oit-test-cluster" >> "$GITHUB_OUTPUT"
+              echo "target_image_tag=test" >> "$GITHUB_OUTPUT"
+              ;;
+            stage)
+              echo "target_role_arn=$PROD_ROLE_ARN" >> "$GITHUB_OUTPUT"
+              echo "target_cluster=ccr-oit-stage-cluster" >> "$GITHUB_OUTPUT"
+              echo "target_image_tag=stage" >> "$GITHUB_OUTPUT"
+              ;;
+            production)
+              echo "target_role_arn=$PROD_ROLE_ARN" >> "$GITHUB_OUTPUT"
+              echo "target_cluster=ccr-oit-prod-cluster" >> "$GITHUB_OUTPUT"
+              echo "target_image_tag=latest" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "Unsupported DEPLOY_ENVIRONMENT: $DEPLOY_ENVIRONMENT" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Assume target AWS role
+        shell: bash
+        env:
+          TARGET_ROLE_ARN: ${{ steps.init.outputs.target_role_arn }}
+        run: |
+          assume_role_output="$(aws sts assume-role --role-arn "$TARGET_ROLE_ARN" --role-session-name "$SESSION_NAME")"
+
+          {
+            echo "AWS_ACCESS_KEY_ID=$(echo "$assume_role_output" | jq -r '.Credentials.AccessKeyId')"
+            echo "AWS_SECRET_ACCESS_KEY=$(echo "$assume_role_output" | jq -r '.Credentials.SecretAccessKey')"
+            echo "AWS_SESSION_TOKEN=$(echo "$assume_role_output" | jq -r '.Credentials.SessionToken')"
+          } >> "$GITHUB_ENV"
+
+      - name: Login to ECR
+        shell: bash
+        run: |
+          aws ecr get-login-password --region "$AWS_REGION" \
+            | docker login --username AWS --password-stdin 729017761751.dkr.ecr.us-east-1.amazonaws.com
+
+      - name: Retag and push image
+        shell: bash
+        env:
+          SOURCE_TAG: ${{ steps.init.outputs.sanitized_deploy_tag }}
+          TARGET_TAG: ${{ steps.init.outputs.target_image_tag }}
+        run: |
+          docker pull "$IMAGE_NAME:$SOURCE_TAG"
+          docker tag "$IMAGE_NAME:$SOURCE_TAG" "$IMAGE_NAME:$TARGET_TAG"
+          docker push "$IMAGE_NAME:$TARGET_TAG"
+
+      - name: Force ECS service deployment
+        shell: bash
+        env:
+          TARGET_CLUSTER: ${{ steps.init.outputs.target_cluster }}
+        run: |
+          aws ecs update-service \
+            --force-new-deployment \
+            --cluster "$TARGET_CLUSTER" \
+            --service mib-air-ohif
