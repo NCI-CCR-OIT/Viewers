@@ -16,7 +16,7 @@ permissions:
 jobs:
   build:
     runs-on:
-      - codebuild-MIBAIR-UI-${{ github.run_id }}-${{ github.run_attempt }}
+      - codebuild-CCR-OSCRI-GitHub-Actions-${{ github.run_id }}-${{ github.run_attempt }}
 
     env:
       AWS_REGION: us-east-1
