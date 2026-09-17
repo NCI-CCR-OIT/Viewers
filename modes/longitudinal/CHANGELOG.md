@@ -3,6 +3,118 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.12.17](https://github.com/OHIF/Viewers/compare/v3.12.15...v3.12.17) (2026-09-10)
+
+**Note:** Version bump only for package @ohif/mode-longitudinal
+
+
+
+
+
+## [3.12.15](https://github.com/OHIF/Viewers/compare/v3.12.14...v3.12.15) (2026-09-08)
+
+**Note:** Version bump only for package @ohif/mode-longitudinal
+
+
+
+
+
+## [3.12.14](https://github.com/OHIF/Viewers/compare/v3.12.13...v3.12.14) (2026-09-03)
+
+**Note:** Version bump only for package @ohif/mode-longitudinal
+
+
+
+
+
+## [3.12.13](https://github.com/OHIF/Viewers/compare/v3.12.12...v3.12.13) (2026-09-01)
+
+**Note:** Version bump only for package @ohif/mode-longitudinal
+
+
+
+
+
+## [3.12.12](https://github.com/OHIF/Viewers/compare/v3.12.11...v3.12.12) (2026-08-11)
+
+**Note:** Version bump only for package @ohif/mode-longitudinal
+
+
+
+
+
+## [3.12.11](https://github.com/OHIF/Viewers/compare/v3.12.10...v3.12.11) (2026-08-03)
+
+**Note:** Version bump only for package @ohif/mode-longitudinal
+
+
+
+
+
+## [3.12.10](https://github.com/OHIF/Viewers/compare/v3.12.9...v3.12.10) (2026-07-24)
+
+**Note:** Version bump only for package @ohif/mode-longitudinal
+
+
+
+
+
+## [3.12.9](https://github.com/OHIF/Viewers/compare/v3.12.8...v3.12.9) (2026-07-23)
+
+**Note:** Version bump only for package @ohif/mode-longitudinal
+
+
+
+
+
+## [3.12.8](https://github.com/OHIF/Viewers/compare/v3.12.7...v3.12.8) (2026-07-21)
+
+**Note:** Version bump only for package @ohif/mode-longitudinal
+
+
+
+
+
+## [3.12.7](https://github.com/OHIF/Viewers/compare/v3.12.6...v3.12.7) (2026-07-17)
+
+**Note:** Version bump only for package @ohif/mode-longitudinal
+
+
+
+
+
+## [3.12.6](https://github.com/OHIF/Viewers/compare/v3.12.5...v3.12.6) (2026-07-07)
+
+**Note:** Version bump only for package @ohif/mode-longitudinal
+
+
+
+
+
+## [3.12.5](https://github.com/OHIF/Viewers/compare/v3.12.4...v3.12.5) (2026-06-17)
+
+**Note:** Version bump only for package @ohif/mode-longitudinal
+
+
+
+
+
+## [3.12.4](https://github.com/OHIF/Viewers/compare/v3.12.3...v3.12.4) (2026-06-05)
+
+**Note:** Version bump only for package @ohif/mode-longitudinal
+
+
+
+
+
+## [3.12.3](https://github.com/OHIF/Viewers/compare/v3.12.2...v3.12.3) (2026-05-27)
+
+**Note:** Version bump only for package @ohif/mode-longitudinal
+
+
+
+
+
 ## [3.12.2](https://github.com/OHIF/Viewers/compare/v3.12.1...v3.12.2) (2026-05-18)
 
 **Note:** Version bump only for package @ohif/mode-longitudinal
