@@ -9,13 +9,11 @@ RUN mkdir /app
 WORKDIR /app
 ENV PATH=/app/node_modules/.bin:$PATH
 
-# Copy package manifests first so dependency installation remains cacheable.
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc preinstall.js ./
-COPY --parents ./extensions/*/package.json ./modes/*/package.json ./platform/*/package.json ./
+# Copy the application using Dockerfile syntax supported by the CI builder.
+COPY . .
 RUN pnpm install --no-frozen-lockfile
 
-# Copy the application and build the viewer with the OHIF 3.13 toolchain.
-COPY --link --exclude=pnpm-lock.yaml --exclude=package.json --exclude=Dockerfile-MIB-AIR . .
+# Build the viewer with the OHIF 3.13 toolchain.
 RUN pnpm --filter @ohif/app run build:dev
 
 # Stage 2: Bundle the built application into a Docker container
