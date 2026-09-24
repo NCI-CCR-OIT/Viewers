@@ -24,6 +24,7 @@ import { useViewportsByPositionStore } from './stores/useViewportsByPositionStor
 import { useToggleOneUpViewportGridStore } from './stores/useToggleOneUpViewportGridStore';
 import requestDisplaySetCreationForStudy from './Panels/requestDisplaySetCreationForStudy';
 import promptSaveReport from './utils/promptSaveReport';
+import restoreViewportPresentation from './utils/restoreViewportPresentation';
 
 export type HangingProtocolParams = {
   protocolId?: string;
@@ -51,6 +52,7 @@ const commandsModule = ({
     viewportGridService,
     displaySetService,
     multiMonitorService,
+    cornerstoneViewportService,
   } = servicesManager.services;
 
   // Define a context menu controller for use with any context menus
@@ -529,7 +531,8 @@ const commandsModule = ({
 
       if (layout.numCols === 1 && layout.numRows === 1) {
         // The viewer is in one-up. Check if there is a state to restore/toggle back to.
-        const { toggleOneUpViewportGridStore } = useToggleOneUpViewportGridStore.getState();
+        const { toggleOneUpViewportGridStore, viewportPresentations } =
+          useToggleOneUpViewportGridStore.getState();
 
         if (!toggleOneUpViewportGridStore) {
           return;
@@ -582,7 +585,7 @@ const commandsModule = ({
         );
 
         // Restore the previous layout including the active viewport.
-        viewportGridService.setLayout({
+        const restoreLayout = viewportGridService.setLayout({
           numRows: toggleOneUpViewportGridStore.layout.numRows,
           numCols: toggleOneUpViewportGridStore.layout.numCols,
           activeViewportId: viewportIdToUpdate,
@@ -591,16 +594,37 @@ const commandsModule = ({
           isHangingProtocolLayout: true,
         });
 
-        // Reset crosshairs after restoring the layout
-        setTimeout(() => {
-          commandsManager.runCommand('resetCrosshairs');
-        }, 0);
+        restoreLayout.then(() => {
+          const willRestorePresentation = restoreViewportPresentation({
+            cornerstoneViewportService,
+            viewportId: viewportIdToUpdate,
+            presentation: viewportPresentations.get(viewportIdToUpdate),
+            onRestored: () => commandsManager.runCommand('resetCrosshairs'),
+          });
+
+          if (!willRestorePresentation) {
+            // Preserve the existing fallback when no Cornerstone presentation is available.
+            commandsManager.runCommand('resetCrosshairs');
+          }
+        });
       } else {
         // We are not in one-up, so toggle to one up.
 
-        // Store the current viewport grid state so we can toggle it back later.
+        // Store the grid and active viewport presentation so both can be restored later.
         const { setToggleOneUpViewportGridStore } = useToggleOneUpViewportGridStore.getState();
-        setToggleOneUpViewportGridStore(viewportGridState);
+        const presentations = cornerstoneViewportService?.getPresentations?.(activeViewportId);
+        const viewportPresentations = new Map();
+
+        if (presentations) {
+          // Segmentation representation lifecycle is intentionally handled separately.
+          const { positionPresentation, lutPresentation } = presentations;
+          viewportPresentations.set(activeViewportId, {
+            positionPresentation,
+            lutPresentation,
+          });
+        }
+
+        setToggleOneUpViewportGridStore(viewportGridState, viewportPresentations);
 
         // one being toggled to one up.
         const findOrCreateViewport = () => {
