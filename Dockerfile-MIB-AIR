@@ -14,6 +14,7 @@ COPY . .
 RUN pnpm install --no-frozen-lockfile
 
 # Build the viewer with the OHIF 3.13 toolchain.
+ARG APP_CONFIG=config/default.js
 RUN pnpm --filter @ohif/app run build:dev
 
 # Stage 2: Bundle the built application into a Docker container
