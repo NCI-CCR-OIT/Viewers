@@ -211,7 +211,17 @@ export class LegacyViewportBackend implements IViewportBackend {
     positionPresentation: PositionPresentation
   ): void {
     const vp = viewport as Types.IStackViewport | Types.IVolumeViewport;
-    const viewRef = positionPresentation?.viewReference;
+    let viewRef = positionPresentation?.viewReference;
+    // A fusion viewport's slice index is not in its reference volume's index space, so
+    // re-applying it jumps the slice. Navigate by the camera focal point, as resize does.
+    if (
+      viewRef?.cameraFocalPoint &&
+      isVolumeViewportType(vp) &&
+      (vp as Types.IVolumeViewport).getAllVolumeIds?.().length > 1
+    ) {
+      viewRef = { ...viewRef };
+      delete viewRef.sliceIndex;
+    }
     if (viewRef) {
       // The orientation can be updated here to navigate to the specified
       // measurement or previous item, but this will not switch to volume

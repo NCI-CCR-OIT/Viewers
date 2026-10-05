@@ -1270,9 +1270,14 @@ class CornerstoneViewportService
     await this._addOverlayRepresentations(overlayProcessingResults);
     viewport.render();
 
+    // These protocol defaults run on a timeout, after the stored presentation is restored
+    // below, so let the stored LUT win or a remounted viewport reverts to the protocol VOI.
+    const storedLutProperties = presentations?.lutPresentation?.properties;
     volumesProperties.forEach(({ properties, volumeId }) => {
+      const storedProperties =
+        storedLutProperties instanceof Map ? storedLutProperties.get(volumeId) : undefined;
       timeoutViewportCallback(() => {
-        viewport.setProperties(properties, volumeId);
+        viewport.setProperties({ ...properties, ...storedProperties }, volumeId);
         viewport.render();
       });
     });
