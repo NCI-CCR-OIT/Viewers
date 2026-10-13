@@ -11,11 +11,7 @@ import promptHydrationDialog, {
 } from './promptHydrationDialog';
 import { getCenterExtent } from './getCenterExtent';
 import { createSegmentationForViewport } from './createSegmentationForViewport';
-import {
-  DOWNLOAD_STORE_DESTINATION,
-  getSegmentationStoreDestination,
-  setSegmentationStoreDestination,
-} from './segmentationStoreDestination';
+import { setSegmentationStoreDestination } from './segmentationStoreDestination';
 
 const utils = {
   handleSegmentChange,
@@ -25,8 +21,6 @@ const utils = {
   promptHydrationDialog,
   getCenterExtent,
   createSegmentationForViewport,
-  DOWNLOAD_STORE_DESTINATION,
-  getSegmentationStoreDestination,
   setSegmentationStoreDestination,
 };
 

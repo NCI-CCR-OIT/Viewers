@@ -1657,7 +1657,7 @@ function commandsModule({
         servicesManager.services;
 
       let storedDataset;
-      const displaySetInstanceUIDs = await createReportAsync({
+      await createReportAsync({
         servicesManager,
         getReport: async () => {
           storedDataset = await commandsManager.runCommand('storeSegmentation', args);
@@ -1666,7 +1666,8 @@ function commandsModule({
         reportType: 'Segmentation',
       });
 
-      if (!displaySetInstanceUIDs || !storedDataset) {
+      // Undefined when the user cancelled the store dialog.
+      if (!storedDataset) {
         return;
       }
 
