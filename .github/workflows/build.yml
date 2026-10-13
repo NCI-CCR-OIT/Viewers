@@ -3,8 +3,7 @@ name: Build and Push OHIF to ECR
 on:
   push:
     branches:
-      - mib-air-release
-      - mib-air-release-*
+      - '**'
   pull_request:
     branches:
       - mib-air-release
@@ -38,33 +37,51 @@ jobs:
             ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
         run: |
           branch="$BRANCH_NAME"
-          should_build=false
-          image_tags=""
 
           if [[ "$branch" == "mib-air-release" ]]; then
-            should_build=true
             image_tags="latest"
-          elif [[ "$branch" =~ ^mib-air-release-.*$ ]]; then
-            should_build=true
-            image_tags=$'next\ndev'
+          else
+            # Same normalization as deploy.yml, so the branch name can be passed
+            # as deploy_tag there: fix/tmtv -> fix-tmtv, IDC-123 -> idc-123.
+            branch_tag="$(printf '%s' "$branch" \
+              | tr '[:upper:]' '[:lower:]' \
+              | sed 's#/#-#g' \
+              | sed 's#[^a-z0-9_.-]#-#g')"
+
+            if [[ ! "$branch_tag" =~ ^[a-z0-9_][a-z0-9_.-]{0,127}$ ]]; then
+              echo "Branch '$branch' does not map to a valid image tag ('$branch_tag')." >&2
+              exit 1
+            fi
+
+            # Environment tags are written only by mib-air-release builds and
+            # deploy.yml; a branch must never overwrite them.
+            case "$branch_tag" in
+              latest | next | dev | test | stage)
+                echo "Branch '$branch' maps to reserved image tag '$branch_tag'. Rename the branch." >&2
+                exit 1
+                ;;
+            esac
+
+            image_tags="$branch_tag"
+            if [[ "$branch" == mib-air-release-* ]]; then
+              image_tags+=$'\nnext\ndev'
+            fi
           fi
 
           {
-            echo "should_build=$should_build"
             echo "image_tags<<EOF"
             printf '%s\n' "$image_tags"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
       - name: Login to ECR
-        if: github.event_name == 'push' && steps.meta.outputs.should_build == 'true'
+        if: github.event_name == 'push'
         shell: bash
         run: |
           aws ecr get-login-password --region "$AWS_REGION" \
             | docker login --username AWS --password-stdin "$ECR_REGISTRY"
 
       - name: Build image
-        if: steps.meta.outputs.should_build == 'true'
         shell: bash
         env:
           IMAGE_TAGS: ${{ steps.meta.outputs.image_tags }}
@@ -78,7 +95,7 @@ jobs:
           done <<< "$IMAGE_TAGS"
 
       - name: Push image tags
-        if: github.event_name == 'push' && steps.meta.outputs.should_build == 'true'
+        if: github.event_name == 'push'
         shell: bash
         env:
           IMAGE_TAGS: ${{ steps.meta.outputs.image_tags }}

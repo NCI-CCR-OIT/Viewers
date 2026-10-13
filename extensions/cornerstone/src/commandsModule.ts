@@ -58,6 +58,10 @@ import { getUpdatedViewportsForSegmentation } from './utils/hydrationUtils';
 import { SegmentationRepresentations } from '@cornerstonejs/tools/enums';
 import { EasingFunctionEnum } from './utils/transitions';
 import { createSegmentationForViewport } from './utils/createSegmentationForViewport';
+import {
+  DOWNLOAD_STORE_DESTINATION,
+  getSegmentationStoreDestination,
+} from './utils/segmentationStoreDestination';
 import { utilities as segmentationUtilities } from '@cornerstonejs/tools/segmentation';
 import i18n from '@ohif/i18n';
 
@@ -1637,26 +1641,56 @@ function commandsModule({
     },
 
     /**
-     * Stores a segmentation and shows it in the viewport
+     * Stores a segmentation and, when the stored copy can be shown, replaces the
+     * segmentation being edited with it in the active viewport.
+     *
+     * The segmentation being edited is kept when the user chose Download, or
+     * when the current mode has no handler that can display the stored object
+     * (for example an RTSTRUCT in TMTV). Replacing it then would leave a blank
+     * viewport and discard the user's work.
+     *
      * @param props.segmentationId - The ID of the segmentation to store
      */
     storeSegmentationCommand: async args => {
       const { segmentationId } = args;
-      const { segmentationService, viewportGridService } = servicesManager.services;
+      const { segmentationService, viewportGridService, displaySetService } =
+        servicesManager.services;
 
-      const displaySetInstanceUIDs = await createReportAsync({
+      let storedDataset;
+      await createReportAsync({
         servicesManager,
-        getReport: () => commandsManager.runCommand('storeSegmentation', args),
+        getReport: async () => {
+          storedDataset = await commandsManager.runCommand('storeSegmentation', args);
+          return storedDataset;
+        },
         reportType: 'Segmentation',
       });
 
-      if (displaySetInstanceUIDs) {
-        segmentationService.remove(segmentationId);
-        viewportGridService.setDisplaySetsForViewport({
-          viewportId: viewportGridService.getActiveViewportId(),
-          displaySetInstanceUIDs,
-        });
+      // Undefined when the user cancelled the store dialog.
+      if (!storedDataset) {
+        return;
       }
+
+      if (getSegmentationStoreDestination(storedDataset) === DOWNLOAD_STORE_DESTINATION) {
+        return;
+      }
+
+      // Look the stored object up by its own UIDs rather than trusting that it
+      // is the most recently added display set.
+      const storedDisplaySet = displaySetService.getDisplaySetForSOPInstanceUID(
+        storedDataset.SOPInstanceUID,
+        storedDataset.SeriesInstanceUID
+      );
+
+      if (!storedDisplaySet || storedDisplaySet.unsupported) {
+        return;
+      }
+
+      segmentationService.remove(segmentationId);
+      viewportGridService.setDisplaySetsForViewport({
+        viewportId: viewportGridService.getActiveViewportId(),
+        displaySetInstanceUIDs: [storedDisplaySet.displaySetInstanceUID],
+      });
     },
 
     /**

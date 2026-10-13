@@ -4,6 +4,7 @@ import { cache, metaData } from '@cornerstonejs/core';
 import { segmentation as cornerstoneToolsSegmentation } from '@cornerstonejs/tools';
 import { adaptersRT, adaptersSEG } from '@cornerstonejs/adapters';
 import { createReportDialogPrompt, useUIStateStore } from '@ohif/extension-default';
+import { utils as cornerstoneUtils } from '@ohif/extension-cornerstone';
 
 import PROMPT_RESPONSES from '../../default/src/utils/_shared/PROMPT_RESPONSES';
 import {
@@ -382,6 +383,10 @@ const commandsModule = ({
         }
 
         await storeFn(naturalizedReport, {});
+
+        // Lets storeSegmentationCommand tell a download from a store into a data
+        // source, so a download does not replace the segmentation being edited.
+        cornerstoneUtils.setSegmentationStoreDestination(naturalizedReport, dataSourceName);
 
         return naturalizedReport;
       } catch (error) {
