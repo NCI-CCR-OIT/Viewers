@@ -226,6 +226,14 @@ const commandsModule = ({ servicesManager, commandsManager, extensionManager }: 
     calculateTMTV: async ({ segmentations }) => {
       const segmentationIds = segmentations.map(segmentation => segmentation.segmentationId);
 
+      // Undo can replay a brush stroke after the last segmentation was deleted,
+      // which fires a data-modified event with nothing left to measure.
+      // computeMetabolicStats reads the first segmentation unconditionally and
+      // would throw, taking down the whole TMTV route.
+      if (!segmentationIds.length) {
+        return;
+      }
+
       const stats = await csTools.utilities.segmentation.computeMetabolicStats({
         segmentationIds,
         segmentIndex: 1,
