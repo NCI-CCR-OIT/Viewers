@@ -28,7 +28,9 @@ import { useViewportsByPositionStore } from './stores/useViewportsByPositionStor
 import { useToggleOneUpViewportGridStore } from './stores/useToggleOneUpViewportGridStore';
 import requestDisplaySetCreationForStudy from './Panels/requestDisplaySetCreationForStudy';
 import promptSaveReport from './utils/promptSaveReport';
-import restoreViewportPresentation from './utils/restoreViewportPresentation';
+import restoreViewportPresentation, {
+  keepZoomAcrossLayoutChange,
+} from './utils/restoreViewportPresentation';
 
 export type HangingProtocolParams = {
   protocolId?: string;
@@ -637,6 +639,13 @@ const commandsModule = ({
             viewportOptions,
           };
         };
+
+        // Keep the zoom relative to the fit when the canvas grows to one-up.
+        keepZoomAcrossLayoutChange({
+          cornerstoneViewportService: servicesManager.services.cornerstoneViewportService,
+          syncGroupService: servicesManager.services.syncGroupService,
+          viewportId: activeViewportId,
+        });
 
         // Set the layout to be 1x1/one-up.
         viewportGridService.setLayout({
