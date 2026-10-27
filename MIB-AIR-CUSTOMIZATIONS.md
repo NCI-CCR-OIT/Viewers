@@ -161,5 +161,6 @@ The deployed config needs a GCP sign-in. For autonomous testing, use the public 
    ```
 3. Open `http://localhost:3010/tmtv?StudyInstanceUIDs=1.2.840.113619.2.290.3.3767434740.226.1600859119.501`.
    This is a phantom study with 47 axial slices; CT and PET slice counts are equal, so it does not exercise fix 6.1's fusion slice path.
+   For that path use the public whole-body study `1.3.6.1.4.1.14519.5.2.1.3098.5025.285242291560760827564488897577` (CT 172 slices, PET 213; its PET is not SUV-scaled, so the PET window looks noisy). Scroll the axial column, then maximize and restore a *sagittal* viewport. With fix 6.1 the axial slice stays put. Without it, the CT slice jumps about 12–23 slices further on every cycle (verified 2026-10-27).
 4. Runtime globals: `window.services`, `window.commandsManager`, `window.cornerstone`, `window.cornerstoneTools`. `toggleOneUp` maximizes the *active* viewport (`viewportGridService.setActiveViewportId` first).
 5. Resize-dependent behavior only runs in a **visible** page. Check `document.visibilityState`; a background tab or hidden pane skips resizes and invalidates the test. Compare world camera values (`focalPoint`, `parallelScale`) and per-volume `voiRange`, and use landscape window sizes like the readers' screens.
