@@ -3,7 +3,7 @@ FROM node:24-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential python3 \
     && rm -rf /var/lib/apt/lists/*
-RUN npm install -g pnpm@11.5.2
+RUN npm install -g pnpm@12.8.1
 
 RUN mkdir /app
 WORKDIR /app

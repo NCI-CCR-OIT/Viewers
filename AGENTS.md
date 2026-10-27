@@ -2,6 +2,11 @@
 
 This file provides guidance to AI coding agents (Claude, Codex, and other LLM tools) when working with code in this repository.
 
+> **MIB-AIR fork:** before making any change, read [MIB-AIR-CUSTOMIZATIONS.md](MIB-AIR-CUSTOMIZATIONS.md).
+> It lists the deployment, data source, authentication, TMTV and bug-fix changes this fork carries
+> on top of upstream OHIF, the files where upstream merges conflict, and the rules for changing them.
+> Keep that file updated with every fork change.
+
 ## Project Overview
 
 This is **OHIF** v3  (Open Health Imaging Foundation) - a medical imaging viewer. It's an extensible web imaging platform.
