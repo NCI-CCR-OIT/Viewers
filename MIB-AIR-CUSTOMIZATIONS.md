@@ -52,11 +52,11 @@ Live delta: `git diff --stat v3.13.13` (fetch upstream tags first).
 - `config/google.js`: same store, OAuth removed. `config/kheops.js`: older shape, unused.
 - `platform/app/package.json`: `dev:viewer` runs `default.js` on **port 3002**.
 
-**GCP token via cookie.** The host page sets `gcp-jwt-token`; `App.tsx` (`getGcpToken`) copies it to `localStorage` before init, and every DICOMweb request sends `Authorization: Bearer <token>`:
+**GCP token via cookie.** The host page sets `gcp-jwt-token`; `App.tsx` (`getGcpToken`) copies it to `localStorage` before init, and every DICOMweb request sends `Authorization: Bearer <token>`. The token expires after 1h and the MIB-AIR UI reissues the cookie every 10 minutes, so `App.tsx` also re-copies it every 60s and whenever the tab becomes visible or focused; without that, an open viewer stops loading images 1h after it was opened:
 
 | File | Edit |
 |---|---|
-| `platform/app/src/App.tsx` | `getGcpToken()`; `routerBasename: '.'` |
+| `platform/app/src/App.tsx` | `getGcpToken()` at load, every 60s and on focus/visibility; `routerBasename: '.'` |
 | `platform/core/src/DICOMWeb/getAuthorizationHeader.ts` | Bearer header from localStorage |
 | `platform/core/src/services/UserAuthenticationService/UserAuthenticationService.ts` | `_getAuthorizationHeader` returns it |
 | `extensions/default/src/DicomWebDataSource/index.ts` | QIDO and WADO clients |

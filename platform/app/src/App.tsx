@@ -64,6 +64,9 @@ export const getGcpToken = async () => {
   }
 };
 
+// The MIB-AIR UI reissues the 1h GCP token cookie every 10 minutes; re-read it so an open viewer never sends an expired token
+const GCP_TOKEN_SYNC_INTERVAL_MS = 60_000;
+
 function App({
   config = {
     /**
@@ -94,6 +97,24 @@ function App({
 
       run();
     });
+  }, []);
+
+  // Keep localStorage in sync with the refreshed gcp-jwt-token cookie: on a timer and whenever the viewer tab regains focus
+  useEffect(() => {
+    const syncGcpTokenWhenVisible = () => {
+      if (document.visibilityState === 'visible') {
+        void getGcpToken();
+      }
+    };
+    const intervalId = window.setInterval(() => void getGcpToken(), GCP_TOKEN_SYNC_INTERVAL_MS);
+    document.addEventListener('visibilitychange', syncGcpTokenWhenVisible);
+    window.addEventListener('focus', syncGcpTokenWhenVisible);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', syncGcpTokenWhenVisible);
+      window.removeEventListener('focus', syncGcpTokenWhenVisible);
+    };
   }, []);
 
   if (!init) {
